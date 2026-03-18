@@ -1,0 +1,109 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite3
+
+# Models & Data (large files)
+models/local_store/*
+models/gguf/*
+models/adapters/*
+models/quarantine/*
+models/base_models/*
+models/merged/*
+models/versions/*
+!models/local_store/.gitkeep
+!models/gguf/.gitkeep
+!models/adapters/.gitkeep
+!models/quarantine/.gitkeep
+!models/base_models/.gitkeep
+!models/merged/.gitkeep
+!models/versions/.gitkeep
+
+# Model weight files
+*.safetensors
+*.bin
+*.gguf
+*.pt
+*.pth
+*.onnx
+
+datasets/raw/*
+datasets/processed/*
+!datasets/raw/.gitkeep
+!datasets/processed/.gitkeep
+
+# Jobs & Logs
+jobs/queue/*
+jobs/logs/*
+logs/*
+!jobs/queue/.gitkeep
+!jobs/logs/.gitkeep
+!logs/.gitkeep
+
+# Registry
+db/registry.json
+
+# Byte-compiled
+*.pyc
+
+# Distribution
+*.tar.gz
+*.zip
+
+# Redis
+dump.rdb
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# mypy
+.mypy_cache/
+
+# ruff
+.ruff_cache/
+
+# Distribution
+*.tar.gz
+*.zip
+
+# Jupyter
+.ipynb_checkpoints/
+
+# pytest
+.cache/
