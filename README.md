@@ -62,7 +62,11 @@ Stop sending your data to third-party APIs. SLM Platform is a local-first soluti
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/slm-platform.git
+git clone https://github.com/YOUR_USERNAME/slm-platform.git
+cd slm-platform
+
+# Or clone this repository directly
+git clone https://github.com/prrathnayake/slm-platform.git
 cd slm-platform
 
 # Create virtual environment
@@ -124,11 +128,14 @@ print(response.choices[0].message.content)
 # Start the platform first
 python -m uvicorn local_llm_platform.apps.gateway_api.main:app --host 0.0.0.0 --port 8000
 
+# List available models
+curl http://localhost:8000/v1/models
+
 # Chat completions (non-streaming)
 curl -X POST http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "slm-ft-final-merged",
+    "model": "Qwen_Qwen2.5-1.5B-Instruct",
     "messages": [{"role": "user", "content": "Hello, how are you?"}],
     "max_tokens": 256,
     "temperature": 0.7
@@ -138,7 +145,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 curl -X POST http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "slm-ft-final-merged",
+    "model": "Qwen_Qwen2.5-1.5B-Instruct",
     "messages": [{"role": "user", "content": "Hello"}],
     "stream": true,
     "max_tokens": 256
@@ -148,13 +155,10 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 curl -X POST http://localhost:8000/v1/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "slm-ft-final-merged",
+    "model": "Qwen_Qwen2.5-1.5B-Instruct",
     "prompt": "Once upon a time",
     "max_tokens": 100
   }'
-
-# List available models
-curl http://localhost:8000/v1/models
 
 # Health check
 curl http://localhost:8000/health
