@@ -11,24 +11,6 @@ class Sidebar(ctk.CTkFrame):
         self._buttons: dict[str, ctk.CTkButton] = {}
         self._active_page = "dashboard"
 
-        self.grid_rowconfigure(6, weight=1)
-
-        # Title
-        title = ctk.CTkLabel(
-            self,
-            text="SLM Platform",
-            font=ctk.CTkFont(size=20, weight="bold"),
-        )
-        title.grid(row=0, column=0, padx=20, pady=(20, 10), sticky="w")
-
-        subtitle = ctk.CTkLabel(
-            self,
-            text="v0.1.0",
-            font=ctk.CTkFont(size=12),
-            text_color="gray",
-        )
-        subtitle.grid(row=1, column=0, padx=20, pady=(0, 20), sticky="w")
-
         # Navigation buttons
         pages = [
             ("dashboard", "Dashboard", "\u2302"),
@@ -38,7 +20,24 @@ class Sidebar(ctk.CTkFrame):
             ("import", "Import", "\u2913"),
             ("datasets", "Datasets", "\u2637"),
             ("settings", "Settings", "\u2691"),
+            ("help", "Help & Docs", "\u2753"),
         ]
+
+        # Title
+        title = ctk.CTkLabel(
+            self,
+            text="SLM Platform",
+            font=ctk.CTkFont(size=20, weight="bold"),
+        )
+        title.grid(row=0, column=0, padx=20, pady=(20, 10), sticky="ew")
+
+        subtitle = ctk.CTkLabel(
+            self,
+            text="v0.1.0",
+            font=ctk.CTkFont(size=12),
+            text_color="gray",
+        )
+        subtitle.grid(row=1, column=0, padx=20, pady=(0, 20), sticky="ew")
 
         for i, (page_id, label, icon) in enumerate(pages):
             btn = ctk.CTkButton(
@@ -54,25 +53,6 @@ class Sidebar(ctk.CTkFrame):
             )
             btn.grid(row=i + 2, column=0, padx=10, pady=2, sticky="ew")
             self._buttons[page_id] = btn
-
-        # Separator
-        separator = ctk.CTkFrame(self, height=1, fg_color=("gray70", "gray30"))
-        separator.grid(row=len(pages) + 2, column=0, padx=15, pady=10, sticky="ew")
-
-        # Help button
-        help_btn = ctk.CTkButton(
-            self,
-            text=f"  \u2753  Help & Docs",
-            anchor="w",
-            height=40,
-            font=ctk.CTkFont(size=14),
-            fg_color="transparent",
-            text_color=("gray10", "gray90"),
-            hover_color=("gray70", "gray30"),
-            command=lambda: self._navigate("help"),
-        )
-        help_btn.grid(row=len(pages) + 3, column=0, padx=10, pady=2, sticky="ew")
-        self._buttons["help"] = help_btn
 
         # Status indicator
         self.status_frame = ctk.CTkFrame(self, fg_color="transparent")
