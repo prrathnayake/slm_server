@@ -67,15 +67,15 @@ class RuntimeRouter:
         return runtime
 
     async def chat_completion(self, model_id: str, request: ChatCompletionRequest):
-        runtime = self._get_runtime_for_model(model_id)
+        runtime = await self._get_runtime_for_model(model_id)
         return await runtime.chat_completion(model_id, request)
 
     async def chat_completion_stream(self, model_id: str, request: ChatCompletionRequest):
-        runtime = self._get_runtime_for_model(model_id)
+        runtime = await self._get_runtime_for_model(model_id)
         return runtime.chat_completion_stream(model_id, request)
 
     async def completion(self, model_id: str, request: CompletionRequest):
-        runtime = self._get_runtime_for_model(model_id)
+        runtime = await self._get_runtime_for_model(model_id)
         return await runtime.completion(model_id, request)
 
     async def load_model(self, model_id: str, backend: str, model_path: str, **kwargs) -> None:
