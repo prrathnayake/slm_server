@@ -126,6 +126,8 @@ class LlamaCppRuntime(BaseRuntime):
 
         for chunk in stream:
             delta = chunk["choices"][0].get("delta", {})
+            content = delta.get("content", "")
+            finish = chunk["choices"][0].get("finish_reason")
             data = {
                 "id": completion_id,
                 "object": "chat.completion.chunk",
@@ -134,12 +136,13 @@ class LlamaCppRuntime(BaseRuntime):
                 "choices": [
                     {
                         "index": 0,
-                        "delta": delta,
-                        "finish_reason": chunk["choices"][0].get("finish_reason"),
+                        "delta": {"content": content},
+                        "finish_reason": finish,
                     }
                 ],
             }
-            yield f"data: {json.dumps(data)}\n\n"
+            if content:
+                yield f"data: {json.dumps(data)}\n\n"
 
         yield "data: [DONE]\n\n"
 

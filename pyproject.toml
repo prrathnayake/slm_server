@@ -3,9 +3,9 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "local-llm-platform"
+name = "slm-platform"
 version = "0.1.0"
-description = "Local-first LLM/SLM platform with OpenAI-compatible API"
+description = "Privacy-first AI agent platform. Run specialized SLMs locally with a single OpenAI-compatible API."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}

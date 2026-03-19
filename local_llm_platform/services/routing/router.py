@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import asyncio
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from local_llm_platform.runtimes.base import BaseRuntime
 from local_llm_platform.runtimes.llama_cpp_runtime import LlamaCppRuntime
@@ -50,7 +49,7 @@ class RuntimeRouter:
         self._runtimes[name] = runtime
         logger.info(f"Registered custom runtime: {name}")
 
-    def _get_runtime_for_model(self, model_id: str) -> BaseRuntime:
+    async def _get_runtime_for_model(self, model_id: str) -> BaseRuntime:
         entry = self.registry.get(model_id)
 
         if entry.status != ModelStatus.READY:
@@ -58,12 +57,10 @@ class RuntimeRouter:
 
         runtime = self.get_runtime(entry.runtime_backend.value)
 
-        if not asyncio.get_event_loop().run_until_complete(runtime.is_model_loaded(model_id)):
+        if not await runtime.is_model_loaded(model_id):
             logger.warning(f"Model {model_id} not loaded in runtime, attempting load")
             if entry.artifact_path:
-                asyncio.get_event_loop().run_until_complete(
-                    runtime.load_model(model_id, entry.artifact_path)
-                )
+                await runtime.load_model(model_id, entry.artifact_path)
             else:
                 raise ModelNotReadyError(model_id, "no artifact path")
 

@@ -36,11 +36,12 @@ class ConcurrencyController:
         return self._global_semaphore, self._model_semaphores[model_id]
 
     async def acquire(self, model_id: str) -> bool:
-        import asyncio
-
         global_sem, model_sem = self._get_semaphore(model_id)
 
-        if global_sem.locked() and model_sem.locked():
+        g_locked = global_sem.locked()
+        m_locked = model_sem.locked()
+
+        if g_locked or m_locked:
             self._dropped += 1
             return False
 

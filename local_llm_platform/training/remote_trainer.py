@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import uuid
 from typing import Any, Dict
 
 from local_llm_platform.training.base import BaseTrainer
@@ -128,7 +127,7 @@ class RemoteTrainer(BaseTrainer):
                     headers["Authorization"] = f"Bearer {worker['api_key']}"
                 async with httpx.AsyncClient() as client:
                     response = await client.get(
-                        f"{worker['url']}/training/{job_id}/progress",
+                        f"{worker['url']}/training/remote/{job_id}/status",
                         headers=headers,
                         timeout=10.0,
                     )

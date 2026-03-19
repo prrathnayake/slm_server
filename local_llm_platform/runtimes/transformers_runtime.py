@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import uuid
 import time
-from typing import Any, AsyncIterator, Dict
+from typing import Any, AsyncIterator, Dict, Optional
 
 from local_llm_platform.runtimes.base import BaseRuntime
 from local_llm_platform.core.schemas.chat import (
@@ -31,6 +32,7 @@ class TransformersRuntime(BaseRuntime):
         super().__init__("transformers")
         self._models: Dict[str, Any] = {}
         self._tokenizers: Dict[str, Any] = {}
+        self._model_semaphores: Dict[str, asyncio.Semaphore] = {}
 
     async def load_model(self, model_id: str, model_path: str, **kwargs) -> None:
         import torch
@@ -92,6 +94,11 @@ class TransformersRuntime(BaseRuntime):
             raise BackendError("transformers", f"Model {model_id} not loaded")
         return self._models[model_id], self._tokenizers[model_id]
 
+    def _get_semaphore(self, model_id: str) -> asyncio.Semaphore:
+        if model_id not in self._model_semaphores:
+            self._model_semaphores[model_id] = asyncio.Semaphore(1)
+        return self._model_semaphores[model_id]
+
     def _format_prompt(self, messages: list, tokenizer) -> str:
         try:
             return tokenizer.apply_chat_template(
@@ -117,10 +124,8 @@ class TransformersRuntime(BaseRuntime):
         import torch
 
         model, tokenizer = self._get_model(model_id)
-
         messages = [m.model_dump(exclude_none=True) for m in request.messages]
         prompt = self._format_prompt(messages, tokenizer)
-
         inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
         gen_kwargs = {
@@ -135,8 +140,9 @@ class TransformersRuntime(BaseRuntime):
             stop = request.stop if isinstance(request.stop, list) else [request.stop]
             gen_kwargs["stop_strings"] = stop
 
-        with torch.no_grad():
-            output_ids = model.generate(**inputs, **gen_kwargs)
+        async with self._get_semaphore(model_id):
+            with torch.no_grad():
+                output_ids = model.generate(**inputs, **gen_kwargs)
 
         new_tokens = output_ids[0][inputs["input_ids"].shape[1]:]
         response_text = tokenizer.decode(new_tokens, skip_special_tokens=True)

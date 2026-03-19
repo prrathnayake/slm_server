@@ -7,479 +7,820 @@ if TYPE_CHECKING:
 
 HELP_SECTIONS = {
     "quick_start": {
-        "title": "Quick Start Guide",
-        "icon": "\u26a1",
-        "content": """Welcome to SLM Platform!
+        "title": "Welcome to SLM Platform",
+        "icon": "\u2665",
+        "content": """PRIVACY-FIRST AI AGENTS - ALL LOCALLY RUN
 
-This guide will help you get started with running local AI models.
+SLM Platform lets you run specialized AI agents locally.
+No data leaves your machine. No API fees. Full control.
 
-STEP 1: Check Server Connection
-  - Look at the bottom-left corner of the sidebar
-  - Green dot means connected, red dot means disconnected
-  - If disconnected, start the server: python run_platform.py
-  - Or update the server URL in Settings
+==============================================
+QUICK START (5 minutes)
+==============================================
 
-STEP 2: Download or Import a Model
-  - Go to Models page and click "Download Base"
-  - Or go to Import page to import a model ZIP file
-  - Popular starter models:
-    > Qwen/Qwen2.5-1.5B-Instruct (fast, lightweight)
-    > meta-llama/Llama-3.2-1B-Instruct (good all-rounder)
-    > microsoft/Phi-3-mini-4k-instruct (strong reasoning)
+STEP 1: Start the Platform
+  - Make sure the server is running:
+    python run_platform.py
+  - Check the sidebar - green dot = connected
 
-STEP 3: Load the Model
-  - Find your model in the Models list
-  - Click "Load" to make it ready for inference
-  - Wait for the status to change to "Ready"
+STEP 2: Download a Base Model
+  - Go to Models page
+  - Click "Download Base"
+  - Enter: Qwen/Qwen2.5-1.5B-Instruct
+  - Wait for download (1-3GB)
 
-STEP 4: Use the Model
-  - The model is now available via the API at:
-    http://localhost:8000/v1/chat/completions
-  - Use any OpenAI-compatible client or your own apps
+STEP 3: Fine-Tune for Your Task
+  - Go to Datasets page
+  - Upload examples of your task
+  - Go to Training page
+  - Select your model and dataset
+  - Click "Start Training"
 
-Need help? Each page has a Help button with specific instructions.""",
+STEP 4: Use Your Agent
+  - Load your fine-tuned model
+  - Use any OpenAI-compatible app
+  - Point to: http://localhost:8000/v1
+
+==============================================
+WHY SLMs?
+==============================================
+
+Small Language Models (SLMs) fine-tuned for
+specific tasks outperform general models:
+
+  - FASTER: 10-50x less compute
+  - CHEAPER: Run on your laptop/PC
+  - BETTER: Exceeds GPT-4 on specific tasks
+  - PRIVATE: Everything runs locally
+
+Example: A 1.5B model fine-tuned on 500
+examples of your code style will write code
+in YOUR style better than any general model.
+
+==============================================
+NEXT STEPS
+==============================================
+
+- Read "Creating Specialized Agents"
+- Explore "Fine-Tuning Guide"
+- Check "Using the API" for integration
+- See "Privacy & Security" for details""",
+    },
+    "agents": {
+        "title": "Creating Specialized Agents",
+        "icon": "\u2B21",
+        "content": """TURN BASE MODELS INTO SPECIALIZED AGENTS
+
+A general model is mediocre at everything.
+Fine-tune once, be exceptional at one thing.
+
+==============================================
+WHAT IS AN AGENT?
+==============================================
+
+An "agent" is a specialized SLM optimized
+for a specific task or personality:
+
+  - CODING AGENT: Your codebase expert
+  - PLANNING AGENT: Task decomposer
+  - PERSONA AGENT: Consistent voice/style
+  - TOOL AGENT: Function calling expert
+  - CUSTOM: Anything you can define
+
+==============================================
+HOW TO CREATE AN AGENT
+==============================================
+
+1. DEFINE YOUR TASK
+   What should this agent excel at?
+   Examples:
+   - "Review Python code for bugs"
+   - "Write in Shakespeare's style"
+   - "Explain blockchain concepts simply"
+   - "Draft professional emails"
+
+2. GATHER EXAMPLES (100-1000)
+   Collect examples of ideal responses
+   Format: JSONL (see Datasets page help)
+   
+   Example for coding agent:
+   {"messages": [
+     {"role": "user", "content": "Fix this bug..."},
+     {"role": "assistant", "content": "The issue is..."}
+   ]}
+
+3. FINE-TUNE THE MODEL
+   - Go to Training page
+   - Select base model (1.5B-3B recommended)
+   - Select your dataset
+   - Choose LoRA (recommended)
+   - Set output name: "my-coding-agent"
+   - Start training
+
+4. REGISTER & LOAD
+   - Training auto-registers the model
+   - Go to Models page
+   - Click "Load" on your new agent
+
+5. USE IT
+   Change the model name in your app:
+   
+   client.chat.completions.create(
+       model="my-coding-agent",
+       messages=[...]
+   )
+
+==============================================
+RECOMMENDED SETUP
+==============================================
+
+Hardware:                    Agent Type:
+- RTX 3060+ (8GB):          Coding, Tool-calling
+- RTX 4060+ (12GB):         Planning, Complex reasoning
+- Laptop (no GPU):          Lightweight persona agents
+- MacBook M1+:              All types (Metal support)
+
+Base Models:
+- Qwen/Qwen2.5-1.5B-Instruct (fast, capable)
+- Qwen/Qwen2.5-3B-Instruct (balanced)
+- meta-llama/Llama-3.2-1B-Instruct
+- microsoft/Phi-3-mini-4k-instruct
+
+==============================================
+TIPS FOR BETTER AGENTS
+==============================================
+
+1. QUALITY > QUANTITY
+   100 great examples > 1000 mediocre ones
+
+2. CONSISTENT FORMAT
+   Keep your JSONL format consistent
+
+3. DIVERSE EXAMPLES
+   Include edge cases and variations
+
+4. SYSTEM PROMPTS
+   Fine-tune captures style, use system
+   prompts for task-specific instructions""",
     },
     "import_models": {
-        "title": "How to Import Models",
+        "title": "Importing Models",
         "icon": "\u2913",
-        "content": """Import Page lets you bring models from other sources
-into the platform, including models trained on Google
-Colab, other machines, or downloaded from the internet.
+        "content": """IMPORT MODELS FROM ANYWHERE
 
-SUPPORTED FORMATS:
-  - GGUF files (quantized models for llama.cpp)
-  - SafeTensors (HuggingFace model format)
-  - LoRA Adapters (PEFT fine-tuned weights)
-  - Full model folders (all files in a directory)
-  - ZIP archives (packaged model bundles)
+Bring in models trained elsewhere - from Google
+Colab, other machines, or online sources.
 
-HOW TO IMPORT A MODEL:
+==============================================
+SUPPORTED FORMATS
+==============================================
 
-1. Go to the Import page from the sidebar
+  GGUF (.gguf files)
+    - Quantized for efficient inference
+    - Best for llama.cpp runtime
+    - Works on CPU or GPU
 
-2. Click "Browse" to select a ZIP file
-   - The ZIP should contain model files
-   - Include a model_manifest.json for best results
+  SafeTensors (.safetensors)
+    - Full precision model weights
+    - Best for fine-tuning
+    - Requires GPU
 
-3. Optionally enter a Model ID
-   - This is a unique name for your model
-   - Leave blank to auto-detect from the ZIP
+  LoRA Adapters (.bin, .pt)
+    - Fine-tuned weights overlay
+    - Small file size
+    - Must attach to base model
 
-4. Click "Import Model"
-   - The system will validate the files
-   - Check the Import Log for progress
+  Full Model Folders (ZIP)
+    - Complete model packages
+    - Include config, tokenizer
+    - Best for import
 
-5. After import, find your model in the Models page
-   - Click "Load" to make it ready
+==============================================
+IMPORT FROM GOOGLE COLAB
+==============================================
 
-ZIP STRUCTURE EXAMPLE:
-  my_model.zip
-  +-- model.safetensors      (model weights)
-  +-- config.json             (model configuration)
-  +-- tokenizer.json          (tokenizer files)
-  +-- model_manifest.json     (optional metadata)
+1. In Colab, after training:
+   import shutil
+   shutil.make_archive('my_agent', 'zip', 'output_folder')
 
-IMPORTING FROM GOOGLE COLAB:
-1. In Colab, save your model to a ZIP:
-   !zip -r model.zip model_output/
 2. Download the ZIP file
-3. Use this Import page to upload it
-4. The platform will detect the model type
-   and register it automatically
 
-IMPORTING GGUF MODELS:
-1. Download a .gguf file from HuggingFace
-2. Place it in models/gguf/ folder
-3. Go to Models page and click "+ Register"
-4. Select backend: llama_cpp
-5. Select format: gguf
-6. Enter the path to your .gguf file
+3. In this app:
+   - Go to Import page
+   - Click "Browse" -> select your ZIP
+   - Click "Import Model"
 
-TIPS:
-  - Large models may take several minutes to import
-  - Check the Import Log for any warnings
-  - Adapters need a matching base model""",
+4. Done! Find it in Models page
+
+==============================================
+IMPORT GGUF FILES
+==============================================
+
+1. Download .gguf file from HuggingFace
+   Example: TheBloke/Llama-2-7B-Chat-GGUF
+
+2. Place in: models/gguf/
+
+3. Register manually:
+   - Go to Models page
+   - Click "+ Register"
+   - Backend: llama_cpp
+   - Format: gguf
+   - Path: models/gguf/your-model.gguf
+
+==============================================
+IMPORT WITH MANIFEST
+==============================================
+
+For best results, include model_manifest.json:
+
+{
+  "model_id": "my-agent",
+  "display_name": "My Coding Agent",
+  "base_model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "runtime_backend": "transformers",
+  "model_format": "adapter",
+  "specialization": "coding"
+}
+
+Place manifest.json in the same folder
+as your model files before importing.
+
+==============================================
+VALIDATION
+==============================================
+
+The import process:
+1. Extracts files to quarantine folder
+2. Validates required files exist
+3. Detects model format automatically
+4. Registers in the model database
+5. Moves to appropriate storage
+
+Check Import Log for warnings/errors.""",
     },
     "training": {
-        "title": "How to Train Models",
+        "title": "Fine-Tuning Guide",
         "icon": "\u2699",
-        "content": """The Training page lets you fine-tune AI models on
-your own data to make them better at specific tasks.
+        "content": """FINE-TUNE SLMs FOR YOUR SPECIFIC TASK
 
-WHAT IS FINE-TUNING?
-Fine-tuning takes an existing model and trains it
-further on your custom data. This makes the model:
-  - Better at your specific use case
-  - Following your preferred style/format
-  - Understanding your domain knowledge
+Fine-tuning transforms a general model into
+a specialized agent that excels at your task.
 
-TRAINING TYPES:
-  - LoRA: Lightweight adapter training (recommended)
-  - QLoRA: Memory-efficient LoRA with quantization
-  - SFT: Full supervised fine-tuning
+==============================================
+WHY FINE-TUNE?
+==============================================
 
-BEFORE YOU START:
-1. Prepare your dataset (see Datasets page)
-2. Choose a base model (must be downloaded first)
-3. Decide on training parameters
+Pre-trained models know everything generally.
+Fine-tuning makes them experts at one thing.
 
-HOW TO START TRAINING:
+  WITHOUT FINE-TUNING:
+  - Generic responses
+  - Inconsistent style
+  - Misses domain specifics
 
-1. Go to the Training page
+  WITH FINE-TUNING:
+  - Expert-level output
+  - YOUR style/preferences
+  - Domain terminology
 
-2. Fill in the configuration:
-   Base Model: The model to fine-tune
-     Example: Qwen/Qwen2.5-1.5B-Instruct
+==============================================
+TRAINING TYPES
+==============================================
 
-   Dataset ID: Your uploaded dataset name
-     Example: my-training-data
+  LoRA (Recommended)
+    - Trains only 0.1-1% of parameters
+    - Fast training (1-4 hours)
+    - Low VRAM requirement (6-8GB)
+    - Good for most use cases
 
-   Output Name: Name for your trained model
-     Example: my-custom-model-v1
+  QLoRA
+    - Quantized base + LoRA
+    - Even lower memory
+    - Slower than LoRA
+    - Good for 7B+ models
 
-   Type: Choose lora (recommended for most cases)
+  SFT (Full Fine-tune)
+    - Trains all parameters
+    - Requires 24GB+ VRAM
+    - Best quality but expensive
+    - For research/production
 
-3. Set training parameters:
-   Epochs: How many times to train on the data
-     Default: 3 (good starting point)
+==============================================
+STEP-BY-STEP TRAINING
+==============================================
 
-   Batch Size: Samples per training step
-     Default: 4 (lower if out of memory)
+1. PREPARE DATA
+   - Go to Datasets page
+   - Upload JSONL file
+   - Use consistent format
 
-   Learning Rate: How fast the model learns
-     Default: 2e-4 (good for LoRA)
+2. CONFIGURE TRAINING
+   - Base Model: Qwen/Qwen2.5-1.5B-Instruct
+   - Dataset: your-uploaded-dataset
+   - Output Name: my-specialized-agent
+   - Type: lora (recommended)
 
-   LoRA Rank (r): Adapter complexity
-     Default: 16 (higher = more capacity)
+3. ADJUST PARAMETERS
+   - Epochs: 2-3 (start small)
+   - Batch Size: 4 (reduce if OOM)
+   - Learning Rate: 2e-4 (good default)
+   - LoRA Rank (r): 16 (higher = more capacity)
+   - Max Seq Length: 2048 (adjust to data)
 
-   LoRA Alpha: Scaling factor
-     Default: 32 (usually 2x the rank)
+4. START TRAINING
+   - Click "Start Training"
+   - Monitor progress bar
+   - Check logs for loss values
 
-   Max Seq Length: Maximum text length
-     Default: 2048 tokens
+5. LOAD & USE
+   - Training auto-registers model
+   - Go to Models page
+   - Load your new agent
 
-4. Choose execution target:
-   - local: Train on this machine
-   - remote: Train on a remote GPU server
+==============================================
+MONITORING TRAINING
+==============================================
 
-5. Click "Start Training"
-   - Monitor progress in the right panel
-   - Check logs for detailed information
+Watch these indicators:
 
-6. When training completes:
-   - The model is automatically registered
-   - Find it in the Models page
-   - Load and use it like any other model
+  Progress Bar: Completion percentage
+  Current Epoch: Which epoch (of total)
+  Loss: Should decrease over time
+  
+  Good signs:
+  - Loss decreasing steadily
+  - No sudden spikes
+  - Epochs completing
 
-TRAINING TIPS:
-  - Start with small epochs (2-3) to test
-  - Use LoRA for most use cases (faster, less memory)
-  - Monitor the loss value - it should decrease
-  - If loss stops decreasing, training is done
-  - If out of memory, reduce batch_size or seq_length
+  Warning signs:
+  - Loss not decreasing after epoch 1
+  - Loss = NaN (overflow, reduce LR)
+  - Very slow progress (reduce batch size)
 
-DATASET FORMAT (JSONL):
-Each line should be a JSON object with messages:
+==============================================
+DATASET FORMATS
+==============================================
+
+JSONL (Recommended):
 {"messages": [
   {"role": "system", "content": "You are helpful."},
-  {"role": "user", "content": "Hello!"},
-  {"role": "assistant", "content": "Hi there!"}
+  {"role": "user", "content": "User question..."},
+  {"role": "assistant", "content": "Assistant answer..."}
 ]}
 
-MONITORING TRAINING:
-  - Progress bar shows completion percentage
-  - Current epoch and loss are displayed
-  - Logs show detailed training information
-  - You can cancel a running job anytime""",
+Instruction Format:
+{"instruction": "...", "output": "..."}
+
+Chat Format:
+{"conversations": [
+  {"from": "human", "value": "..."},
+  {"from": "gpt", "value": "..."}
+]}
+
+==============================================
+TROUBLESHOOTING
+==============================================
+
+OUT OF MEMORY:
+  - Reduce batch_size to 2
+  - Reduce max_seq_length to 1024
+  - Use QLoRA instead of LoRA
+  - Use smaller base model
+
+TRAINING TOO SLOW:
+  - Use smaller model (1.5B not 7B)
+  - Reduce max_seq_length
+  - Use GGML quantized base
+
+BAD RESULTS:
+  - More training data (100+ examples)
+  - Better data quality
+  - Try different learning rate
+  - More epochs (if loss still dropping)""",
     },
     "models": {
         "title": "Managing Models",
-        "icon": "\u2b21",
-        "content": """The Models page is your central hub for managing
-all AI models in the platform.
+        "icon": "\u2B21",
+        "content": """MODEL MANAGEMENT
 
-MODEL TABLE:
-Each model shows:
-  - Model ID: Unique identifier
-  - Display Name: Human-readable name
-  - Format: gguf, safetensors, or adapter
-  - Backend: Which runtime handles it
-  - Status: ready, loading, unloaded, etc.
+Register, load, unload, and organize your
+agents and base models.
 
-MODEL ACTIONS:
-  [Load] - Load model into memory for inference
-           Status changes to "ready" when done
+==============================================
+MODEL TABLE COLUMNS
+==============================================
 
-  [Unload] - Free model from memory
-             Use this to save resources
+  Model ID:      Unique identifier
+  Display Name:  Human-readable name
+  Format:        gguf, safetensors, adapter
+  Backend:       Which runtime handles it
+  Status:        Current state
 
-  [X] - Delete model from registry
-        Does not delete the actual files
+STATUS INDICATORS:
+  green  = Ready (loaded in memory)
+  orange = Loading (being loaded)
+  gray   = Unloaded (on disk)
+  blue   = Training (being fine-tuned)
+  red    = Failed (error occurred)
 
-ADAPTERS (LoRA models):
-  - Marked with [A] prefix in the list
-  - Adapters need a base model to work
-  - [Info] - View adapter details
-  - [Merge] - Combine adapter with base model
-             Creates a standalone model
+==============================================
+MODEL ACTIONS
+==============================================
 
-DOWNLOADING MODELS:
-1. Click "Download Base" button
-2. Enter a HuggingFace model name:
-   - Qwen/Qwen2.5-1.5B-Instruct
-   - meta-llama/Llama-3.2-1B-Instruct
-   - microsoft/Phi-3-mini-4k-instruct
-3. Wait for download to complete
-4. The model appears in the list
+  [Load]     - Load into memory (enable use)
+  [Unload]   - Free from memory (save RAM)
+  [Info]     - View adapter details (LoRA)
+  [Merge]    - Combine LoRA with base model
+  [X]        - Remove from registry (not files)
 
-REGISTERING MODELS:
-If you have a model file already on disk:
-1. Click "+ Register" button
-2. Fill in the details:
-   - Model ID: Unique name
-   - Display Name: Friendly name
-   - Backend: llama_cpp, transformers, etc.
-   - Format: gguf, safetensors, adapter
-   - Specialization: general, coder, etc.
-   - Artifact Path: Path to model files
+==============================================
+DOWNLOAD BASE MODELS
+==============================================
+
+Recommended starter models:
+
+  Ultra-Light (no GPU):
+  - Qwen/Qwen2.5-0.5B-Instruct
+
+  Light (6GB VRAM):
+  - Qwen/Qwen2.5-1.5B-Instruct
+  - Llama-3.2-1B-Instruct
+
+  Medium (8GB VRAM):
+  - Qwen/Qwen2.5-3B-Instruct
+  - Llama-3.2-3B-Instruct
+
+  Strong (12GB+ VRAM):
+  - Qwen/Qwen2.5-7B-Instruct
+  - Mistral-7B-Instruct-v0.3
+
+==============================================
+REGISTERING MODELS
+==============================================
+
+For models on disk:
+
+1. Click "+ Register"
+
+2. Fill details:
+   Model ID:     my-agent
+   Display Name: My Coding Agent
+   Backend:      transformers (or llama_cpp)
+   Format:       safetensors or gguf
+   Specialization: coding
+   Artifact Path: /full/path/to/model
+
 3. Click "Register"
 
-HOT VS COLD MODELS:
-  - Hot models: Loaded at startup (always ready)
-  - Cold models: Loaded on demand (saves memory)
-  - Configure max loaded models in Settings
+==============================================
+ADAPTERS (LoRA)
+==============================================
 
-POPULAR MODELS:
-  Small & Fast (good for laptops):
-    - Qwen/Qwen2.5-0.5B-Instruct
-    - Qwen/Qwen2.5-1.5B-Instruct
-    - microsoft/Phi-3-mini-4k-instruct
+LoRA adapters are lightweight overlays:
 
-  Balanced (needs 4-8GB VRAM):
-    - Qwen/Qwen2.5-3B-Instruct
-    - meta-llama/Llama-3.2-3B-Instruct
+  [A] Prefix = Adapter in the list
+  
+  Info button: View adapter details
+    - Base model it attaches to
+    - LoRA rank and alpha
+    - Target modules
 
-  Powerful (needs 8GB+ VRAM):
-    - Qwen/Qwen2.5-7B-Instruct
-    - mistralai/Mistral-7B-Instruct-v0.3""",
-    },
-    "datasets": {
-        "title": "Managing Datasets",
-        "icon": "\u2637",
-        "content": """The Datasets page lets you upload and manage
-training data for fine-tuning models.
+  Merge button: Create standalone model
+    - Combines adapter + base
+    - Creates new .safetensors file
+    - Register as new model
 
-SUPPORTED FORMATS:
-  - JSONL: JSON Lines (recommended)
-  - Chat: Conversation format
-  - Instruction: Input/output pairs
-  - Tool Call: Function calling format
-  - Plain Text: Simple text corpus
+==============================================
+MEMORY MANAGEMENT
+==============================================
 
-HOW TO UPLOAD A DATASET:
+Loaded models consume RAM/VRAM:
 
-1. Go to the Datasets page
+  1.5B model: ~3GB RAM
+  3B model:   ~6GB RAM
+  7B model:   ~14GB RAM
 
-2. In the Quick Upload section:
-   - Click "..." to browse for your file
-   - Enter a unique Name for the dataset
-   - Select the Format from the dropdown
-
-3. Click "Upload"
-   - The dataset appears in the list above
-
-DATASET FORMATS:
-
-JSONL Format (recommended):
-  Each line is a JSON object:
-  {"messages": [
-    {"role": "system", "content": "..."},
-    {"role": "user", "content": "..."},
-    {"role": "assistant", "content": "..."}
-  ]}
-
-Chat Format:
-  Conversational data with turns:
-  {"conversations": [
-    {"from": "human", "value": "..."},
-    {"from": "gpt", "value": "..."}
-  ]}
-
-Instruction Format:
-  Simple input-output pairs:
-  {"instruction": "...", "input": "...", "output": "..."}
-
-Tool Call Format:
-  For training tool-use models:
-  {"messages": [
-    {"role": "user", "content": "..."},
-    {"role": "assistant", "tool_calls": [...]},
-    {"role": "tool", "content": "..."}
-  ]}
-
-PREPARING YOUR DATA:
-  1. Gather your examples (100+ recommended)
-  2. Format them consistently
-  3. Save as .jsonl file
-  4. Upload via this page
-  5. Use the dataset name in Training page
-
-DATA QUALITY TIPS:
-  - More diverse examples = better results
-  - Consistent formatting is important
-  - Remove duplicates and low-quality data
-  - Include edge cases in your examples
-  - Balance different types of examples
-  - 500-2000 examples is a good starting point
-
-SAMPLE DATASET:
-  {"messages": [
-    {"role": "system", "content": "You are a helpful assistant."},
-    {"role": "user", "content": "What is Python?"},
-    {"role": "assistant", "content": "Python is a programming language."}
-  ]}
-  {"messages": [
-    {"role": "system", "content": "You are a helpful assistant."},
-    {"role": "user", "content": "How do I read a file?"},
-    {"role": "assistant", "content": "Use open() function."}
-  ]}""",
+Tips:
+  - Unload unused models
+  - Limit MAX_LOADED_MODELS in settings
+  - Use quantized (GGUF Q4/Q5) models""",
     },
     "api_usage": {
         "title": "Using the API",
         "icon": "\u2139",
-        "content": """The platform exposes an OpenAI-compatible API
-that works with any OpenAI client library.
+        "content": """OPENAI-COMPATIBLE API
 
-API ENDPOINTS:
-  GET  /v1/models              List all models
-  POST /v1/chat/completions    Chat with a model
-  POST /v1/completions         Text completion
-  POST /v1/embeddings          Generate embeddings
-  GET  /health                 Check server status
+All your existing OpenAI code works with
+SLM Platform. Just change the base URL.
 
-BASE URL: http://localhost:8000
+==============================================
+BASIC USAGE
+==============================================
 
-USING WITH PYTHON (openai library):
-  from openai import OpenAI
+Python (openai library):
+------------------------
+from openai import OpenAI
 
-  client = OpenAI(
-      base_url="http://localhost:8000/v1",
-      api_key="any-value"
-  )
+client = OpenAI(
+    base_url="http://localhost:8000/v1",
+    api_key="local"  # Any value works
+)
 
-  response = client.chat.completions.create(
-      model="my-model",
-      messages=[
-          {"role": "user", "content": "Hello!"}
-      ]
-  )
-  print(response.choices[0].message.content)
+response = client.chat.completions.create(
+    model="my-coding-agent",
+    messages=[
+        {"role": "system", "content": "You are a Python expert."},
+        {"role": "user", "content": "Write a fast sort"}
+    ]
+)
+print(response.choices[0].message.content)
 
-USING WITH CURL:
-  curl http://localhost:8000/v1/chat/completions \\
-    -H "Content-Type: application/json" \\
-    -d '{
-      "model": "my-model",
-      "messages": [{"role": "user", "content": "Hello!"}]
-    }'
+curl:
+-----
+curl http://localhost:8000/v1/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "my-coding-agent",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'
 
-STREAMING:
-  Add "stream": true to get token-by-token output:
+==============================================
+STREAMING
+==============================================
 
-  stream = client.chat.completions.create(
-      model="my-model",
-      messages=[{"role": "user", "content": "Hello!"}],
-      stream=True
-  )
-  for chunk in stream:
-      if chunk.choices[0].delta.content:
-          print(chunk.choices[0].delta.content, end="")
+For real-time token-by-token output:
 
-COMMON PARAMETERS:
-  model:           Model ID to use
-  messages:        Conversation history
-  max_tokens:      Maximum response length
-  temperature:     Creativity (0.0-2.0)
-  top_p:           Nucleus sampling threshold
-  stream:          Enable streaming
-  stop:            Stop sequences
+client.chat.completions.create(
+    model="my-agent",
+    messages=[...],
+    stream=True
+)
 
-API KEY:
-  If API_KEY is set in .env, include it:
-  Authorization: Bearer your-api-key
+for chunk in stream:
+    if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="")
 
-  If API_KEY is empty, any value works.""",
+==============================================
+AVAILABLE ENDPOINTS
+==============================================
+
+POST /v1/chat/completions
+  - Chat interface (recommended)
+  - Use for conversations
+
+POST /v1/completions
+  - Text completion (raw)
+  - Use for autocomplete
+
+GET /v1/models
+  - List all available models
+
+GET /health
+  - Check server status
+
+GET /docs
+  - Interactive API documentation
+
+==============================================
+PARAMETERS
+==============================================
+
+  model:        Agent/model ID to use
+  messages:     Conversation history
+  temperature: Creativity (0.0-2.0)
+                0.0 = deterministic
+                1.0 = creative (default)
+  max_tokens:  Max response length
+  top_p:       Nucleus sampling
+  stream:      Enable streaming
+  stop:        Stop sequences
+
+==============================================
+MULTI-AGENT ROUTING
+==============================================
+
+Route to different agents by model name:
+
+# Coding agent
+client.chat.completions.create(
+    model="coder-qwen-1.5b",
+    messages=[{"role": "user", "content": "Fix this bug..."}]
+)
+
+# Planning agent
+client.chat.completions.create(
+    model="planner-3b",
+    messages=[{"role": "user", "content": "Break down this task..."}]
+)
+
+# Persona agent
+client.chat.completions.create(
+    model="shakespeare-0.5b",
+    messages=[{"role": "user", "content": "Say hello..."}]
+)""",
+    },
+    "privacy": {
+        "title": "Privacy & Security",
+        "icon": "\u26BF",
+        "content": """YOUR DATA NEVER LEAVES YOUR MACHINE
+
+SLM Platform is designed for privacy-first
+AI. Everything runs locally.
+
+==============================================
+HOW WE PROTECT PRIVACY
+==============================================
+
+100% LOCAL PROCESSING
+  - Models run on YOUR hardware
+  - No network requests to external APIs
+  - Conversations stored only on your disk
+
+NO TELEMETRY
+  - No analytics or tracking
+  - No usage data collection
+  - No phone-home features
+
+OPTIONAL REMOTE ACCESS
+  - Enable TLS for network access
+  - API key authentication available
+  - VPN/SSH tunnel recommended
+
+==============================================
+DATA FLOW
+==============================================
+
+WITHOUT SLM PLATFORM:
+  User Query
+      |
+      v
+  Third-Party API (OpenAI, Anthropic, etc.)
+      |
+      v
+  Your data on THEIR servers <-- Privacy risk
+      |
+      v
+  Response
+
+WITH SLM PLATFORM:
+  User Query
+      |
+      v
+  Your Local SLM Platform <-- Data stays here
+      |
+      v
+  Local Model (GGUF/SafeTensors)
+      |
+      v
+  Response
+
+==============================================
+SECURITY BEST PRACTICES
+==============================================
+
+1. API KEY
+   - Set API_KEY in .env for remote access
+   - Use strong, random keys
+   - Rotate periodically
+
+2. NETWORK ACCESS
+   - Use VPN for remote access
+   - Enable TLS/HTTPS in production
+   - Firewall: only allow trusted IPs
+
+3. MODEL SOURCES
+   - Download from trusted sources
+   - Verify checksums when available
+   - Use HuggingFace for verified models
+
+4. DOCKER
+   - Keep Docker updated
+   - Don't expose ports unnecessarily
+   - Use read-only volumes for data
+
+==============================================
+WHEN TO USE REMOTE APIs
+==============================================
+
+Consider cloud APIs for:
+  - Very large models (70B+)
+  - Specialized models not locally viable
+  - Research/experimentation
+  - When privacy isn't critical
+
+Use SLM Platform for:
+  - Production applications
+  - Sensitive data (medical, legal, financial)
+  - Cost-sensitive deployments
+  - Low-latency requirements
+  - Regulatory compliance (GDPR, HIPAA)""",
     },
     "troubleshooting": {
         "title": "Troubleshooting",
-        "icon": "\u26a0",
-        "content": """Common issues and how to fix them.
+        "icon": "\u26A0",
+        "content": """COMMON ISSUES AND FIXES
 
-SERVER NOT CONNECTED:
-  Problem: Red "Disconnected" indicator
-  Fixes:
-    1. Start the server: python run_platform.py
-    2. Check the server URL in Settings
-    3. Make sure port 8000 is not blocked
-    4. Check firewall settings
+==============================================
+SERVER ISSUES
+==============================================
 
-MODEL WON'T LOAD:
-  Problem: Model stuck on "loading" or shows error
-  Fixes:
-    1. Check if model files exist at the path
-    2. Verify the correct backend is selected
-    3. Check available memory (RAM/VRAM)
-    4. Try a smaller model first
-    5. Check the Activity Log for details
+"Not Connected" indicator (red dot)
+  1. Start server: python run_platform.py
+  2. Check server URL in Settings
+  3. Ensure port 8000 is available
+  4. Check firewall rules
 
-OUT OF MEMORY:
-  Problem: CUDA out of memory or system RAM full
-  Fixes:
-    1. Unload other loaded models first
-    2. Use a smaller/quantized model (GGUF)
-    3. Reduce batch_size in training
-    4. Reduce max_seq_length in training
-    5. Use QLoRA instead of LoRA for training
+Port already in use
+  1. Run: python run_platform.py --kill
+  2. Or manually kill process on port
 
-TRAINING FAILS:
-  Problem: Training job shows "failed" status
-  Fixes:
-    1. Check training logs for error details
-    2. Verify dataset format is correct
-    3. Ensure base model is downloaded
-    4. Check dataset has enough samples
-    5. Try reducing batch_size
+==============================================
+MODEL ISSUES
+==============================================
 
-SLOW PERFORMANCE:
-  Problem: Model responses are very slow
-  Fixes:
-    1. Use a smaller model
-    2. Use GGUF quantized models (Q4, Q5)
-    3. Reduce max_tokens in requests
-    4. Close other GPU-using applications
-    5. Check if GPU is being used
+Model won't load
+  1. Verify model files exist at path
+  2. Check correct backend selected
+  3. Ensure enough memory available
+  4. Check Activity Log for errors
 
-IMPORT FAILS:
-  Problem: Model import shows errors
-  Fixes:
-    1. Verify ZIP contains valid model files
-    2. Check for required files (config.json)
-    3. Ensure enough disk space
-    4. Try with model_manifest.json included
-    5. Check the Import Log for details
+Out of memory (CUDA OOM or RAM)
+  1. Unload other models first
+  2. Use smaller/quantized model
+  3. Training: reduce batch_size
+  4. Training: reduce max_seq_length
 
-PORT ALREADY IN USE:
-  Problem: Cannot start server, port busy
-  Fixes:
-    1. Run: python run_platform.py --kill
-    2. Or manually stop the process using the port
-    3. Change the port in .env file
+Model downloads fail
+  1. Check internet connection
+  2. Verify HuggingFace model exists
+  3. Check disk space (1-5GB needed)
+  4. Try again (transient issues)
 
-GETTING HELP:
-  - Check the Activity Log on each page
-  - Review server logs in the logs/ folder
-  - Visit the API docs at http://localhost:8000/docs
-  - Open an issue on GitHub""",
+==============================================
+TRAINING ISSUES
+==============================================
+
+Training fails immediately
+  1. Check dataset format is valid
+  2. Verify dataset has 100+ examples
+  3. Ensure base model is downloaded
+  4. Check training logs for errors
+
+Loss = NaN
+  1. Reduce learning rate (try 1e-4)
+  2. Increase data quality
+  3. Check for malformed JSONL
+
+Training too slow
+  1. Use smaller base model
+  2. Reduce batch_size
+  3. Use LoRA instead of SFT
+  4. Ensure GPU is being used
+
+==============================================
+IMPORT ISSUES
+==============================================
+
+ZIP import fails
+  1. Ensure ZIP is valid archive
+  2. Check for required files inside
+  3. Include model_manifest.json
+  4. Verify disk space available
+
+Format detection fails
+  1. Include manifest.json with files
+  2. Check files are in correct structure
+  3. For GGUF: ensure .gguf extension
+
+==============================================
+PERFORMANCE ISSUES
+==============================================
+
+Slow responses
+  1. Use smaller model
+  2. Use GGUF quantized models
+  3. Reduce max_tokens
+  4. Close other GPU applications
+  5. Ensure using GPU not CPU
+
+GPU not being used
+  1. Check CUDA is installed
+  2. Verify GPU is detected
+  3. Use CUDA_VISIBLE_DEVICES
+  4. Check model format (GGUF uses CPU)
+
+==============================================
+GET HELP
+==============================================
+
+1. Check Activity Log on each page
+2. Review logs/ folder for errors
+3. API docs: http://localhost:8000/docs
+4. GitHub Issues with:
+   - Error messages
+   - Steps to reproduce
+   - Your setup (OS, GPU, Python version)""",
     },
 }
 
@@ -492,11 +833,9 @@ class HelpPage(ctk.CTkFrame):
         self.app = app
         self._current_section = None
 
-        # Main layout: sidebar + content
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        # Left: Section navigation
         self.nav_frame = ctk.CTkFrame(self, width=200)
         self.nav_frame.grid(row=0, column=0, padx=(20, 10), pady=20, sticky="nsew")
         self.nav_frame.grid_rowconfigure(99, weight=1)
@@ -523,13 +862,11 @@ class HelpPage(ctk.CTkFrame):
             btn.grid(row=i + 1, column=0, padx=8, pady=2, sticky="ew")
             self._nav_buttons[section_id] = btn
 
-        # Right: Content area
         self.content_frame = ctk.CTkFrame(self)
         self.content_frame.grid(row=0, column=1, padx=(10, 20), pady=20, sticky="nsew")
         self.content_frame.grid_columnconfigure(0, weight=1)
         self.content_frame.grid_rowconfigure(1, weight=1)
 
-        # Content header
         self.header_label = ctk.CTkLabel(
             self.content_frame,
             text="",
@@ -537,7 +874,6 @@ class HelpPage(ctk.CTkFrame):
         )
         self.header_label.grid(row=0, column=0, padx=20, pady=(15, 5), sticky="w")
 
-        # Scrollable content text
         self.content_text = ctk.CTkTextbox(
             self.content_frame,
             font=ctk.CTkFont(family="Consolas", size=13),
@@ -545,7 +881,6 @@ class HelpPage(ctk.CTkFrame):
         )
         self.content_text.grid(row=1, column=0, padx=15, pady=(5, 15), sticky="nsew")
 
-        # Show default section
         self._show_section("quick_start")
 
     def _show_section(self, section_id: str):
@@ -553,7 +888,6 @@ class HelpPage(ctk.CTkFrame):
         if not section:
             return
 
-        # Update nav button highlighting
         for sid, btn in self._nav_buttons.items():
             if sid == section_id:
                 btn.configure(fg_color=("gray75", "gray25"))
@@ -562,10 +896,8 @@ class HelpPage(ctk.CTkFrame):
 
         self._current_section = section_id
 
-        # Update header
         self.header_label.configure(text=f"{section['icon']}  {section['title']}")
 
-        # Update content
         self.content_text.delete("1.0", "end")
         self.content_text.insert("1.0", section["content"])
         self.content_text.configure(state="disabled")

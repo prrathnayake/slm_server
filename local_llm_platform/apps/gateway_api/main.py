@@ -269,6 +269,9 @@ async def create_training_job(
     execution_target: str = "local",
     api_key: Optional[str] = Depends(verify_api_key),
 ):
+    entry = dataset_service._datasets.get(config.dataset_id)
+    if not entry:
+        raise HTTPException(status_code=400, detail=f"Dataset not found: {config.dataset_id}")
     job = await training_service.create_job(config, execution_target)
     return job.model_dump()
 
@@ -334,8 +337,9 @@ async def upload_dataset(
 
     try:
         dataset_format = DatasetFormat(format)
+        _name = name if name else (file.filename if file.filename else "uploaded_dataset")
         entry = await dataset_service.upload_dataset(
-            name=name or file.filename,
+            name=_name,
             file_path=tmp_path,
             dataset_format=dataset_format,
         )

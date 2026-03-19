@@ -105,6 +105,8 @@ class TGIRuntime(BaseRuntime):
                 async for line in response.aiter_lines():
                     if line.startswith("data: "):
                         yield f"{line}\n\n"
+                    elif line.strip() == "data: [DONE]":
+                        pass
 
         yield "data: [DONE]\n\n"
 
