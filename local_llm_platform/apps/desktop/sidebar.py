@@ -14,6 +14,7 @@ class Sidebar(ctk.CTkFrame):
         # Navigation buttons
         pages = [
             ("dashboard", "Dashboard", "\u2302"),
+            ("monitoring", "Monitor", "\u25A0"),
             ("models", "Models", "\u2B21"),
             ("hf_browse", "HF Browser", "\U0001F917"),
             ("training", "Training", "\u2699"),

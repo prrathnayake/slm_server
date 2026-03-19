@@ -12,6 +12,7 @@ from local_llm_platform.apps.desktop.pages.datasets import DatasetsPage
 from local_llm_platform.apps.desktop.pages.settings import SettingsPage
 from local_llm_platform.apps.desktop.pages.help_page import HelpPage
 from local_llm_platform.apps.desktop.pages.hf_browse import HFBrowsePage
+from local_llm_platform.apps.desktop.pages.monitoring import MonitoringPage
 
 
 class SLMApp(ctk.CTk):
@@ -63,6 +64,7 @@ class SLMApp(ctk.CTk):
         self.pages["settings"] = SettingsPage(self.content, self)
         self.pages["help"] = HelpPage(self.content, self)
         self.pages["hf_browse"] = HFBrowsePage(self.content, self)
+        self.pages["monitoring"] = MonitoringPage(self.content, self)
 
     def _navigate(self, page_id: str):
         if self._current_page:
