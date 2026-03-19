@@ -46,13 +46,11 @@ class TestFullWorkflow:
     def test_training_job_lifecycle(self, client):
         # Create job
         resp = client.post("/v1/training/jobs", json={
-            "config": {
-                "base_model": "test-base",
-                "dataset_id": "ds-test",
-                "output_name": "test-output",
-                "training_type": "lora",
-                "epochs": 1,
-            },
+            "base_model": "test-base",
+            "dataset_id": "ds-test",
+            "output_name": "test-output",
+            "training_type": "lora",
+            "epochs": 1,
             "execution_target": "local",
         })
         assert resp.status_code == 200

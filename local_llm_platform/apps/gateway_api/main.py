@@ -1,22 +1,19 @@
-from __future__ import annotations
-
 import json
 import time
-import uuid
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Query
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from local_llm_platform.core.config.settings import settings
 from local_llm_platform.core.logging.logger import setup_logging, get_logger
 from local_llm_platform.core.security.auth import verify_api_key
-from local_llm_platform.core.schemas.chat import ChatCompletionRequest, ChatCompletionResponse
-from local_llm_platform.core.schemas.completion import CompletionRequest, CompletionResponse
+from local_llm_platform.core.schemas.chat import ChatCompletionRequest
+from local_llm_platform.core.schemas.completion import CompletionRequest
 from local_llm_platform.core.schemas.models import ModelListResponse, ModelRegistryEntry, ModelStatus
-from local_llm_platform.core.schemas.training import TrainingConfig, TrainingJob
+from local_llm_platform.core.schemas.training import TrainingConfig
 from local_llm_platform.core.exceptions.errors import PlatformError
 from local_llm_platform.services.registry.registry import ModelRegistry
 from local_llm_platform.services.routing.router import RuntimeRouter
@@ -269,9 +266,6 @@ async def create_training_job(
     execution_target: str = "local",
     api_key: Optional[str] = Depends(verify_api_key),
 ):
-    entry = dataset_service._datasets.get(config.dataset_id)
-    if not entry:
-        raise HTTPException(status_code=400, detail=f"Dataset not found: {config.dataset_id}")
     job = await training_service.create_job(config, execution_target)
     return job.model_dump()
 
@@ -322,8 +316,8 @@ async def cancel_training_job(
 @app.post("/v1/datasets/upload")
 async def upload_dataset(
     file: UploadFile = File(...),
-    name: str = "",
-    format: str = "jsonl",
+    name: Optional[str] = Form(default=None),
+    format: str = Form(default="jsonl"),
     api_key: Optional[str] = Depends(verify_api_key),
 ):
     from local_llm_platform.core.schemas.training import DatasetFormat
@@ -337,7 +331,7 @@ async def upload_dataset(
 
     try:
         dataset_format = DatasetFormat(format)
-        _name = name if name else (file.filename if file.filename else "uploaded_dataset")
+        _name = name if name is not None else (file.filename or "uploaded_dataset")
         entry = await dataset_service.upload_dataset(
             name=_name,
             file_path=tmp_path,

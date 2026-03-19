@@ -180,9 +180,10 @@ class TestConfigManager:
 
 class TestConcurrencyController:
     @pytest.mark.asyncio
-    async def test_acquire_release(self):
+    def test_acquire_release(self):
+        import asyncio
         cc = ConcurrencyController(max_global=5, max_per_model=2)
-        result = await cc.acquire("model-1")
+        result = asyncio.get_event_loop().run_until_complete(cc.acquire("model-1"))
         assert result is True
         assert cc._total_active == 1
         cc.release("model-1")

@@ -18,10 +18,8 @@ dependencies = [
     "httpx>=0.27.0",
     "python-multipart>=0.0.9",
     "sqlalchemy>=2.0",
-    "redis>=5.0",
-    "structlog>=24.0",
     "click>=8.0",
-    "rich>=13.0",
+    "huggingface_hub>=0.20.0",
 ]
 
 [project.optional-dependencies]
@@ -41,7 +39,6 @@ runtimes = [
 ]
 monitoring = [
     "prometheus-client>=0.20.0",
-    "celery>=5.3",
 ]
 desktop = [
     "customtkinter>=5.2.0",

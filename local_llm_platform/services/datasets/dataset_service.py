@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from local_llm_platform.core.schemas.training import DatasetEntry, DatasetFormat
-from local_llm_platform.core.exceptions.errors import DatasetError, ValidationError
+from local_llm_platform.core.exceptions.errors import DatasetError
 from local_llm_platform.core.logging.logger import get_logger
 
 logger = get_logger("services.datasets")

@@ -78,13 +78,11 @@ class TestTrainingEndpoints:
 
     def test_create_training_job(self, client):
         response = client.post("/v1/training/jobs", json={
-            "config": {
-                "base_model": "llama-3b",
-                "dataset_id": "ds-123",
-                "output_name": "test-finetune",
-                "training_type": "lora",
-                "epochs": 1,
-            },
+            "base_model": "llama-3b",
+            "dataset_id": "ds-123",
+            "output_name": "test-finetune",
+            "training_type": "lora",
+            "epochs": 1,
             "execution_target": "local",
         })
         assert response.status_code == 200
@@ -93,13 +91,11 @@ class TestTrainingEndpoints:
 
     def test_create_and_get_job(self, client):
         create_resp = client.post("/v1/training/jobs", json={
-            "config": {
-                "base_model": "llama-3b",
-                "dataset_id": "ds-123",
-                "output_name": "test-finetune-2",
-                "training_type": "lora",
-                "epochs": 1,
-            },
+            "base_model": "llama-3b",
+            "dataset_id": "ds-123",
+            "output_name": "test-finetune-2",
+            "training_type": "lora",
+            "epochs": 1,
             "execution_target": "local",
         })
         job_id = create_resp.json()["job_id"]

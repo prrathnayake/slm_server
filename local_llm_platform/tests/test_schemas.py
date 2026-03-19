@@ -196,7 +196,7 @@ class TestExceptions:
 
     def test_validation_error(self):
         err = ValidationError("missing field")
-        assert err.status_code == 422
+        assert err.status_code == 400
 
     def test_authentication_error(self):
         err = AuthenticationError()

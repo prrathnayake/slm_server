@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import copy
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
-from local_llm_platform.core.config.settings import settings
 from local_llm_platform.core.logging.logger import get_logger
 
 logger = get_logger("services.config")
@@ -54,9 +54,9 @@ class ConfigManager:
                 logger.info("Loaded config from file")
             except Exception as e:
                 logger.warning(f"Failed to load config: {e}")
-                self._config = self.DEFAULT_CONFIG.copy()
+                self._config = copy.deepcopy(self.DEFAULT_CONFIG)
         else:
-            self._config = self.DEFAULT_CONFIG.copy()
+            self._config = copy.deepcopy(self.DEFAULT_CONFIG)
             self._save()
 
     def _save(self) -> None:
@@ -91,6 +91,6 @@ class ConfigManager:
         return self._config.copy()
 
     def reset(self) -> None:
-        self._config = self.DEFAULT_CONFIG.copy()
+        self._config = copy.deepcopy(self.DEFAULT_CONFIG)
         self._save()
         logger.info("Config reset to defaults")

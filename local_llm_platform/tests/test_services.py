@@ -27,7 +27,7 @@ class TestArtifactManager:
             path = am.save_manifest("test", manifest)
             assert path.exists()
 
-            loaded = am.am.load_manifest("test")
+            loaded = am.load_manifest("test")
             assert loaded["model_id"] == "test"
 
     def test_delete_nonexistent(self):

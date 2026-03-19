@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import uuid
 import time
-from typing import Any, AsyncIterator, Dict, Optional
+from typing import Any, AsyncIterator, Dict
 
 from local_llm_platform.runtimes.base import BaseRuntime
 from local_llm_platform.core.schemas.chat import (

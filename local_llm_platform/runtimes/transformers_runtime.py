@@ -4,7 +4,7 @@ import asyncio
 import json
 import uuid
 import time
-from typing import Any, AsyncIterator, Dict, Optional
+from typing import Any, AsyncIterator, Dict
 
 from local_llm_platform.runtimes.base import BaseRuntime
 from local_llm_platform.core.schemas.chat import (
@@ -174,10 +174,8 @@ class TransformersRuntime(BaseRuntime):
         import torch
 
         model, tokenizer = self._get_model(model_id)
-
         messages = [m.model_dump(exclude_none=True) for m in request.messages]
         prompt = self._format_prompt(messages, tokenizer)
-
         inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
         from transformers import TextIteratorStreamer
@@ -196,10 +194,11 @@ class TransformersRuntime(BaseRuntime):
         completion_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
         created = int(time.time())
 
-        thread = threading.Thread(
-            target=lambda: model.generate(**inputs, **gen_kwargs)
-        )
-        thread.start()
+        async with self._get_semaphore(model_id):
+            thread = threading.Thread(
+                target=lambda: model.generate(**inputs, **gen_kwargs)
+            )
+            thread.start()
 
         for text in streamer:
             if text:
@@ -236,7 +235,6 @@ class TransformersRuntime(BaseRuntime):
         import torch
 
         model, tokenizer = self._get_model(model_id)
-
         inputs = tokenizer(request.prompt, return_tensors="pt").to(model.device)
 
         gen_kwargs = {
@@ -247,8 +245,9 @@ class TransformersRuntime(BaseRuntime):
             "pad_token_id": tokenizer.pad_token_id,
         }
 
-        with torch.no_grad():
-            output_ids = model.generate(**inputs, **gen_kwargs)
+        async with self._get_semaphore(model_id):
+            with torch.no_grad():
+                output_ids = model.generate(**inputs, **gen_kwargs)
 
         new_tokens = output_ids[0][inputs["input_ids"].shape[1]:]
         text = tokenizer.decode(new_tokens, skip_special_tokens=True)

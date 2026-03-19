@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import asyncio
 import json
 from typing import Any, AsyncIterator
 
-from local_llm_platform.core.schemas.chat import ChatCompletionRequest
 from local_llm_platform.core.logging.logger import get_logger
 
 logger = get_logger("services.streaming")

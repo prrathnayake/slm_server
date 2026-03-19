@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import shutil
 import zipfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
-from local_llm_platform.core.schemas.models import ModelFormat, ModelManifest, ModelRegistryEntry, BackendType, SourceType
-from local_llm_platform.core.exceptions.errors import ValidationError, PlatformError
+from local_llm_platform.core.schemas.models import ModelFormat, ModelManifest
+from local_llm_platform.core.exceptions.errors import ValidationError
 from local_llm_platform.core.logging.logger import get_logger
 
 logger = get_logger("training.import")

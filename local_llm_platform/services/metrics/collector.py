@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import time
-from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from collections import defaultdict, deque
+from typing import Any, Dict, Optional
 
 from local_llm_platform.core.logging.logger import get_logger
 
@@ -12,9 +12,11 @@ logger = get_logger("services.metrics")
 class MetricsCollector:
     """Collects and stores platform metrics."""
 
+    MAX_HISTOGRAM_SIZE = 10000
+
     def __init__(self):
         self._counters: Dict[str, int] = defaultdict(int)
-        self._histograms: Dict[str, List[float]] = defaultdict(list)
+        self._histograms: Dict[str, deque] = defaultdict(deque)
         self._gauges: Dict[str, float] = {}
         self._start_time = time.time()
 
@@ -22,9 +24,10 @@ class MetricsCollector:
         self._counters[name] += value
 
     def record(self, name: str, value: float) -> None:
-        self._histograms[name].append(value)
-        if len(self._histograms[name]) > 10000:
-            self._histograms[name] = self._histograms[name][-5000:]
+        hist = self._histograms[name]
+        hist.append(value)
+        while len(hist) > self.MAX_HISTOGRAM_SIZE:
+            hist.popleft()
 
     def gauge(self, name: str, value: float) -> None:
         self._gauges[name] = value
@@ -33,17 +36,18 @@ class MetricsCollector:
         uptime = time.time() - self._start_time
 
         histogram_stats = {}
-        for name, values in self._histograms.items():
-            if values:
-                sorted_vals = sorted(values)
+        for name, hist in self._histograms.items():
+            if hist:
+                sorted_vals = sorted(hist)
+                n = len(sorted_vals)
                 histogram_stats[name] = {
-                    "count": len(values),
+                    "count": n,
                     "min": sorted_vals[0],
                     "max": sorted_vals[-1],
-                    "avg": sum(values) / len(values),
-                    "p50": sorted_vals[len(sorted_vals) // 2],
-                    "p95": sorted_vals[int(len(sorted_vals) * 0.95)],
-                    "p99": sorted_vals[int(len(sorted_vals) * 0.99)],
+                    "avg": sum(sorted_vals) / n,
+                    "p50": sorted_vals[n // 2],
+                    "p95": sorted_vals[max(0, int(n * 0.95))],
+                    "p99": sorted_vals[max(0, int(n * 0.99))],
                 }
 
         return {

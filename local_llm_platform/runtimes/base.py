@@ -1,13 +1,7 @@
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator, Dict, List, Optional
+from typing import Any, AsyncIterator, Dict, List
 
-from local_llm_platform.core.schemas.chat import (
-    ChatCompletionRequest,
-    ChatCompletionResponse,
-    ChatMessage,
-)
+from local_llm_platform.core.schemas.chat import ChatCompletionRequest, ChatCompletionResponse
 from local_llm_platform.core.schemas.completion import CompletionRequest, CompletionResponse
 
 

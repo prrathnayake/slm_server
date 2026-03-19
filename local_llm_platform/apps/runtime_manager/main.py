@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import asyncio
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -10,7 +9,6 @@ from local_llm_platform.core.config.settings import settings
 from local_llm_platform.core.logging.logger import setup_logging, get_logger
 from local_llm_platform.services.registry import ModelRegistry
 from local_llm_platform.services.routing import RuntimeRouter
-from local_llm_platform.core.schemas.models import ModelStatus
 
 setup_logging("INFO")
 logger = get_logger("runtime_manager")

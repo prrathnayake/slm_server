@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from local_llm_platform.core.config.settings import settings
 from local_llm_platform.core.logging.logger import get_logger

@@ -68,7 +68,7 @@ class ValidationError(PlatformError):
     """Raised when input validation fails."""
 
     def __init__(self, message: str):
-        super().__init__(f"Validation error: {message}", status_code=422)
+        super().__init__(f"Validation error: {message}", status_code=400)
 
 
 class AuthenticationError(PlatformError):

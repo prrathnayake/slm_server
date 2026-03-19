@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import asyncio
 from typing import Any, Dict
 
 from local_llm_platform.training.base import BaseTrainer
-from local_llm_platform.core.schemas.training import TrainingConfig, TrainingJob, TrainingStatus
+from local_llm_platform.core.schemas.training import TrainingJob, TrainingStatus
 from local_llm_platform.core.exceptions.errors import TrainingError
 from local_llm_platform.core.logging.logger import get_logger
 

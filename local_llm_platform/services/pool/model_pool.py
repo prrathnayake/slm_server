@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import asyncio
 import time
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from local_llm_platform.core.logging.logger import get_logger
 
@@ -36,7 +35,7 @@ class ModelPool:
         if len(self._loaded_order) < self.max_loaded:
             return None
 
-        for model_id in reversed(self._loaded_order.keys()):
+        for model_id in self._loaded_order.keys():
             if model_id not in self._hot_models:
                 return model_id
 
