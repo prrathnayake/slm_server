@@ -118,6 +118,48 @@ response = client.chat.completions.create(
 print(response.choices[0].message.content)
 ```
 
+### Testing with cURL
+
+```bash
+# Start the platform first
+python -m uvicorn local_llm_platform.apps.gateway_api.main:app --host 0.0.0.0 --port 8000
+
+# Chat completions (non-streaming)
+curl -X POST http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "slm-ft-final-merged",
+    "messages": [{"role": "user", "content": "Hello, how are you?"}],
+    "max_tokens": 256,
+    "temperature": 0.7
+  }'
+
+# Chat completions (streaming)
+curl -X POST http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "slm-ft-final-merged",
+    "messages": [{"role": "user", "content": "Hello"}],
+    "stream": true,
+    "max_tokens": 256
+  }'
+
+# Text completions
+curl -X POST http://localhost:8000/v1/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "slm-ft-final-merged",
+    "prompt": "Once upon a time",
+    "max_tokens": 100
+  }'
+
+# List available models
+curl http://localhost:8000/v1/models
+
+# Health check
+curl http://localhost:8000/health
+```
+
 ## Fine-Tuning: Create Your Agents
 
 ### Why Fine-Tune?
