@@ -99,6 +99,14 @@ class TransformersRuntime(BaseRuntime):
             self._model_semaphores[model_id] = asyncio.Semaphore(1)
         return self._model_semaphores[model_id]
 
+    async def _acquire_semaphore(self, model_id: str):
+        sem = self._get_semaphore(model_id)
+        await sem.acquire()
+        return sem
+
+    async def _release_semaphore(self, sem: asyncio.Semaphore):
+        sem.release()
+
     def _format_prompt(self, messages: list, tokenizer) -> str:
         try:
             return tokenizer.apply_chat_template(
@@ -172,14 +180,14 @@ class TransformersRuntime(BaseRuntime):
         self, model_id: str, request: ChatCompletionRequest
     ) -> AsyncIterator[str]:
         import torch
+        from transformers import TextIteratorStreamer
+        import threading
+        import queue
 
         model, tokenizer = self._get_model(model_id)
         messages = [m.model_dump(exclude_none=True) for m in request.messages]
         prompt = self._format_prompt(messages, tokenizer)
         inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-
-        from transformers import TextIteratorStreamer
-        import threading
 
         streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
         gen_kwargs = {
@@ -193,41 +201,57 @@ class TransformersRuntime(BaseRuntime):
 
         completion_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
         created = int(time.time())
+        exception_queue = queue.Queue()
 
-        async with self._get_semaphore(model_id):
-            thread = threading.Thread(
-                target=lambda: model.generate(**inputs, **gen_kwargs)
-            )
+        def generate_in_thread():
+            try:
+                with torch.no_grad():
+                    model.generate(**inputs, **gen_kwargs)
+            except Exception as e:
+                exception_queue.put(e)
+
+        semaphore = self._get_semaphore(model_id)
+        await semaphore.acquire()
+        try:
+            thread = threading.Thread(target=generate_in_thread)
             thread.start()
 
-        for text in streamer:
-            if text:
+            try:
+                for text in streamer:
+                    if text:
+                        data = {
+                            "id": completion_id,
+                            "object": "chat.completion.chunk",
+                            "created": created,
+                            "model": model_id,
+                            "choices": [
+                                {
+                                    "index": 0,
+                                    "delta": {"content": text},
+                                    "finish_reason": None,
+                                }
+                            ],
+                        }
+                        yield f"data: {json.dumps(data)}\n\n"
+
+                thread.join(timeout=5)
+
+                if not exception_queue.empty():
+                    raise exception_queue.get()
+
                 data = {
                     "id": completion_id,
                     "object": "chat.completion.chunk",
                     "created": created,
                     "model": model_id,
-                    "choices": [
-                        {
-                            "index": 0,
-                            "delta": {"content": text},
-                            "finish_reason": None,
-                        }
-                    ],
+                    "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
                 }
                 yield f"data: {json.dumps(data)}\n\n"
-
-        thread.join()
-
-        data = {
-            "id": completion_id,
-            "object": "chat.completion.chunk",
-            "created": created,
-            "model": model_id,
-            "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
-        }
-        yield f"data: {json.dumps(data)}\n\n"
-        yield "data: [DONE]\n\n"
+                yield "data: [DONE]\n\n"
+            finally:
+                thread.join(timeout=1)
+        finally:
+            semaphore.release()
 
     async def completion(
         self, model_id: str, request: CompletionRequest

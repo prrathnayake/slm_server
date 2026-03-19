@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from collections import defaultdict, deque
 from typing import Any, Dict, Optional
 
@@ -37,15 +38,25 @@ class ConcurrencyController:
     async def acquire(self, model_id: str) -> bool:
         global_sem, model_sem = self._get_semaphore(model_id)
 
-        g_locked = global_sem.locked()
-        m_locked = model_sem.locked()
+        g_acquired = global_sem.locked()
+        m_acquired = model_sem.locked()
 
-        if g_locked or m_locked:
+        if g_acquired or m_acquired:
             self._dropped += 1
             return False
 
-        await global_sem.acquire()
-        await model_sem.acquire()
+        try:
+            await asyncio.wait_for(global_sem.acquire(), timeout=0.1)
+        except asyncio.TimeoutError:
+            self._dropped += 1
+            return False
+
+        try:
+            await asyncio.wait_for(model_sem.acquire(), timeout=0.1)
+        except asyncio.TimeoutError:
+            global_sem.release()
+            self._dropped += 1
+            return False
 
         self._active_requests[model_id] += 1
         self._total_active += 1

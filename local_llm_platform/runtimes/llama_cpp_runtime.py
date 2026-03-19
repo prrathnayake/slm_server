@@ -81,7 +81,7 @@ class LlamaCppRuntime(BaseRuntime):
             temperature=request.temperature or 1.0,
             top_p=request.top_p or 1.0,
             max_tokens=request.max_tokens,
-            stop=request.stop if isinstance(request.stop, list) else None,
+            stop=request.stop if isinstance(request.stop, (list, str)) else None,
         )
 
         return ChatCompletionResponse(
@@ -106,9 +106,7 @@ class LlamaCppRuntime(BaseRuntime):
             ),
         )
 
-    async def chat_completion_stream(
-        self, model_id: str, request: ChatCompletionRequest
-    ) -> AsyncIterator[str]:
+    async def chat_completion_stream(self, model_id: str, request: ChatCompletionRequest):
         llm = self._get_llm(model_id)
 
         messages = [m.model_dump(exclude_none=True) for m in request.messages]

@@ -72,7 +72,8 @@ class RuntimeRouter:
 
     async def chat_completion_stream(self, model_id: str, request: ChatCompletionRequest):
         runtime = await self._get_runtime_for_model(model_id)
-        return runtime.chat_completion_stream(model_id, request)
+        async for chunk in runtime.chat_completion_stream(model_id, request):
+            yield chunk
 
     async def completion(self, model_id: str, request: CompletionRequest):
         runtime = await self._get_runtime_for_model(model_id)

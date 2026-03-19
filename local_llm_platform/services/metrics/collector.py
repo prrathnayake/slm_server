@@ -38,16 +38,18 @@ class MetricsCollector:
         histogram_stats = {}
         for name, hist in self._histograms.items():
             if hist:
+                n = len(hist)
+                total = sum(hist)
+                
                 sorted_vals = sorted(hist)
-                n = len(sorted_vals)
                 histogram_stats[name] = {
                     "count": n,
                     "min": sorted_vals[0],
                     "max": sorted_vals[-1],
-                    "avg": sum(sorted_vals) / n,
+                    "avg": total / n,
                     "p50": sorted_vals[n // 2],
-                    "p95": sorted_vals[max(0, int(n * 0.95))],
-                    "p99": sorted_vals[max(0, int(n * 0.99))],
+                    "p95": sorted_vals[min(n - 1, int(n * 0.95))],
+                    "p99": sorted_vals[min(n - 1, int(n * 0.99))],
                 }
 
         return {

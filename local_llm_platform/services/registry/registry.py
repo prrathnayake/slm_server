@@ -19,6 +19,8 @@ class ModelRegistry:
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._models: Dict[str, ModelRegistryEntry] = {}
+        self._pending_save = False
+        self._dirty = False
         self._load()
 
     def _load(self) -> None:
@@ -33,18 +35,30 @@ class ModelRegistry:
                 logger.warning(f"Failed to load registry: {e}")
 
     def _save(self) -> None:
+        if not self._dirty:
+            return
         data = {
             model_id: entry.model_dump()
             for model_id, entry in self._models.items()
         }
         with open(self.db_path, "w") as f:
             json.dump(data, f, indent=2, default=str)
+        self._dirty = False
+        logger.debug("Registry saved to disk")
+
+    def _mark_dirty(self) -> None:
+        self._dirty = True
+
+    def save_now(self) -> None:
+        """Force immediate save to disk."""
+        self._save()
 
     def register(self, entry: ModelRegistryEntry) -> ModelRegistryEntry:
         now = datetime.now(timezone.utc)
         entry.created_at = now
         entry.updated_at = now
         self._models[entry.model_id] = entry
+        self._mark_dirty()
         self._save()
         logger.info(f"Registered model: {entry.model_id}")
         return entry
@@ -52,6 +66,7 @@ class ModelRegistry:
     def unregister(self, model_id: str) -> bool:
         if model_id in self._models:
             del self._models[model_id]
+            self._mark_dirty()
             self._save()
             logger.info(f"Unregistered model: {model_id}")
             return True
@@ -66,6 +81,7 @@ class ModelRegistry:
         entry = self.get(model_id)
         entry.status = status
         entry.updated_at = datetime.now(timezone.utc)
+        self._mark_dirty()
         self._save()
         return entry
 

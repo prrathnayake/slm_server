@@ -37,7 +37,7 @@ class BaseRuntime(ABC):
     @abstractmethod
     async def chat_completion_stream(
         self, model_id: str, request: ChatCompletionRequest
-    ) -> AsyncIterator[str]:
+    ):
         """Generate a streaming chat completion. Yields SSE chunks."""
         ...
 

@@ -123,9 +123,7 @@ class VLLMRuntime(BaseRuntime):
             ),
         )
 
-    async def chat_completion_stream(
-        self, model_id: str, request: ChatCompletionRequest
-    ) -> AsyncIterator[str]:
+    async def chat_completion_stream(self, model_id: str, request: ChatCompletionRequest):
         engine = self._get_engine(model_id)
 
         from vllm import SamplingParams
