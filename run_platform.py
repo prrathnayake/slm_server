@@ -194,10 +194,18 @@ def check_health(port, path="/health", timeout=10):
 
 def launch_ui():
     print("[START] Desktop UI...")
-    proc = subprocess.Popen(
-        "python -m local_llm_platform.apps.desktop.app",
-        shell=True,
-    )
+    if sys.platform == "win32":
+        proc = subprocess.Popen(
+            "python -m local_llm_platform.apps.desktop.app",
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    else:
+        proc = subprocess.Popen(
+            "python -m local_llm_platform.apps.desktop.app",
+            start_new_session=True,
+        )
     SERVICES.append({"name": "Desktop UI", "proc": proc, "port": None, "pid": proc.pid})
 
 

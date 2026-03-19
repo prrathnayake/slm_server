@@ -87,8 +87,13 @@ class SLMApp(ctk.CTk):
 
 
 def main():
-    app = SLMApp()
-    app.mainloop()
+    import sys
+    try:
+        app = SLMApp()
+        app.mainloop()
+    except KeyboardInterrupt:
+        print("\n[UI] Shutting down...")
+        sys.exit(0)
 
 
 if __name__ == "__main__":
