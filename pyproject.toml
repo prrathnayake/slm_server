@@ -44,6 +44,7 @@ desktop = [
     "customtkinter>=5.2.0",
     "CTkMessagebox>=2.5",
     "pillow>=10.0",
+    "psutil>=5.9.0",
 ]
 all = [
     "local-llm-platform[training,runtimes,monitoring,desktop]",
