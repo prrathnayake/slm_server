@@ -1,9 +1,16 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
+
+try:
+    import fcntl
+    _HAS_FCNTL = True
+except ImportError:
+    _HAS_FCNTL = False
 
 from local_llm_platform.core.schemas.models import ModelRegistryEntry, ModelStatus, ModelInfo, ModelListResponse
 from local_llm_platform.core.exceptions.errors import ModelNotFoundError
@@ -19,18 +26,34 @@ class ModelRegistry:
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._models: Dict[str, ModelRegistryEntry] = {}
-        self._pending_save = False
         self._dirty = False
+        self._lock_file = self.db_path.with_suffix(".lock")
         self._load()
+
+    def _acquire_lock(self):
+        if not _HAS_FCNTL:
+            return None
+        lock_fd = open(self._lock_file, "w")
+        fcntl.flock(lock_fd.fileno(), fcntl.LOCK_EX)
+        return lock_fd
+
+    def _release_lock(self, lock_fd):
+        if lock_fd is not None:
+            fcntl.flock(lock_fd.fileno(), fcntl.LOCK_UN)
+            lock_fd.close()
 
     def _load(self) -> None:
         if self.db_path.exists():
             try:
-                with open(self.db_path) as f:
-                    data = json.load(f)
-                for model_id, entry_data in data.items():
-                    self._models[model_id] = ModelRegistryEntry(**entry_data)
-                logger.info(f"Loaded {len(self._models)} models from registry")
+                lock_fd = self._acquire_lock()
+                try:
+                    with open(self.db_path) as f:
+                        data = json.load(f)
+                    for model_id, entry_data in data.items():
+                        self._models[model_id] = ModelRegistryEntry(**entry_data)
+                    logger.info(f"Loaded {len(self._models)} models from registry")
+                finally:
+                    self._release_lock(lock_fd)
             except Exception as e:
                 logger.warning(f"Failed to load registry: {e}")
 
@@ -41,8 +64,14 @@ class ModelRegistry:
             model_id: entry.model_dump()
             for model_id, entry in self._models.items()
         }
-        with open(self.db_path, "w") as f:
-            json.dump(data, f, indent=2, default=str)
+        lock_fd = self._acquire_lock()
+        try:
+            tmp_path = self.db_path.with_suffix(".tmp")
+            with open(tmp_path, "w") as f:
+                json.dump(data, f, indent=2, default=str)
+            os.replace(tmp_path, self.db_path)
+        finally:
+            self._release_lock(lock_fd)
         self._dirty = False
         logger.debug("Registry saved to disk")
 

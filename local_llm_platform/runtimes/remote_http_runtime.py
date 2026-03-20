@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import Any, AsyncIterator, Dict
 
 from local_llm_platform.runtimes.base import BaseRuntime
-from local_llm_platform.core.schemas.chat import ChatCompletionRequest
-from local_llm_platform.core.schemas.completion import CompletionRequest
+from local_llm_platform.core.schemas.chat import ChatCompletionRequest, ChatCompletionResponse
+from local_llm_platform.core.schemas.completion import CompletionRequest, CompletionResponse
 from local_llm_platform.core.exceptions.errors import ModelLoadError, BackendError
 from local_llm_platform.core.logging.logger import get_logger
 
@@ -14,8 +14,8 @@ logger = get_logger("runtimes.remote_http")
 class RemoteHTTPRuntime(BaseRuntime):
     """Runtime backend that proxies to a remote HTTP inference server."""
 
-    def __init__(self):
-        super().__init__("remote_http")
+    def __init__(self, max_concurrent: int = 4):
+        super().__init__("remote_http", max_concurrent=max_concurrent)
         self._remote_endpoints: Dict[str, Dict[str, Any]] = {}
 
     async def load_model(self, model_id: str, model_path: str, **kwargs) -> None:

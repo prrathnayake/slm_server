@@ -16,17 +16,15 @@ class ConcurrencyController:
         self.max_global = max_global
         self.max_per_model = max_per_model
 
-        self._global_semaphore = None
-        self._model_semaphores: Dict[str, Any] = {}
+        self._global_semaphore: Optional[asyncio.Semaphore] = None
+        self._model_semaphores: Dict[str, asyncio.Semaphore] = {}
         self._active_requests: Dict[str, int] = defaultdict(int)
         self._total_active = 0
         self._request_queue: deque = deque()
         self._dropped = 0
         self._completed = 0
 
-    def _get_semaphore(self, model_id: str):
-        import asyncio
-
+    def _get_semaphores(self, model_id: str) -> tuple[asyncio.Semaphore, asyncio.Semaphore]:
         if self._global_semaphore is None:
             self._global_semaphore = asyncio.Semaphore(self.max_global)
 
@@ -36,14 +34,7 @@ class ConcurrencyController:
         return self._global_semaphore, self._model_semaphores[model_id]
 
     async def acquire(self, model_id: str) -> bool:
-        global_sem, model_sem = self._get_semaphore(model_id)
-
-        g_acquired = global_sem.locked()
-        m_acquired = model_sem.locked()
-
-        if g_acquired or m_acquired:
-            self._dropped += 1
-            return False
+        global_sem, model_sem = self._get_semaphores(model_id)
 
         try:
             await asyncio.wait_for(global_sem.acquire(), timeout=0.1)
@@ -63,7 +54,7 @@ class ConcurrencyController:
         return True
 
     def release(self, model_id: str) -> None:
-        global_sem, model_sem = self._get_semaphore(model_id)
+        global_sem, model_sem = self._get_semaphores(model_id)
 
         model_sem.release()
         global_sem.release()

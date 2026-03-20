@@ -60,8 +60,11 @@ class ConfigManager:
             self._save()
 
     def _save(self) -> None:
-        with open(self.config_path, "w") as f:
+        import os
+        tmp_path = str(self.config_path) + ".tmp"
+        with open(tmp_path, "w") as f:
             json.dump(self._config, f, indent=2)
+        os.replace(tmp_path, self.config_path)
 
     def get(self, key: str, default: Any = None) -> Any:
         keys = key.split(".")

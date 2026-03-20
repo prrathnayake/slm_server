@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from collections import OrderedDict
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from local_llm_platform.core.logging.logger import get_logger
 

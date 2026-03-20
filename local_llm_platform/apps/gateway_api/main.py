@@ -55,9 +55,9 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS if hasattr(settings, 'CORS_ORIGINS') else ["http://localhost:3000", "http://localhost:8000"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -324,50 +324,8 @@ async def upload_dataset(
     import tempfile
     import os
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=f"_{file.filename}") as tmp:
-        content = await file.read()
-        tmp.write(content)
-        tmp_path = tmp.name
-
-    try:
-        dataset_format = DatasetFormat(format)
-        _name = name if name is not None else (file.filename or "uploaded_dataset")
-        entry = await dataset_service.upload_dataset(
-            name=_name,
-            file_path=tmp_path,
-            dataset_format=dataset_format,
-        )
-        return entry.model_dump()
-    finally:
-        os.unlink(tmp_path)
-
-
-@app.get("/v1/datasets")
-async def list_datasets(api_key: Optional[str] = Depends(verify_api_key)):
-    datasets = await dataset_service.list_datasets()
-    return {"datasets": [d.model_dump() for d in datasets]}
-
-
-@app.get("/v1/datasets/{dataset_id}/validate")
-async def validate_dataset(
-    dataset_id: str,
-    api_key: Optional[str] = Depends(verify_api_key),
-):
-    return await dataset_service.validate_dataset(dataset_id)
-
-
-# --- Import ---
-
-@app.post("/v1/models/import")
-async def import_model(
-    file: UploadFile = File(...),
-    model_id: Optional[str] = None,
-    api_key: Optional[str] = Depends(verify_api_key),
-):
-    import tempfile
-    import os
-
-    with tempfile.NamedTemporaryFile(delete=False, suffix=f"_{file.filename}") as tmp:
+    safe_filename = file.filename.replace("/", "_").replace("\\", "_") if file.filename else "model"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=f"_{safe_filename}") as tmp:
         content = await file.read()
         tmp.write(content)
         tmp_path = tmp.name
@@ -467,11 +425,11 @@ async def hf_model_info(
 async def hf_download_model(
     model_id: str,
     revision: str = "main",
-    token: Optional[str] = None,
     api_key: Optional[str] = Depends(verify_api_key),
 ):
-    """Download a model from HuggingFace."""
-    result = await hf_service.download_model(model_id, revision=revision, token=token)
+    """Download a model from HuggingFace. Use HF_TOKEN env var for authentication."""
+    hf_token = settings.HF_TOKEN
+    result = await hf_service.download_model(model_id, revision=revision, token=hf_token)
     return result
 
 

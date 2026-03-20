@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator, Dict, List
+from typing import Any, AsyncIterator, Dict, List, Optional
+import asyncio
 
 from local_llm_platform.core.schemas.chat import ChatCompletionRequest, ChatCompletionResponse
 from local_llm_platform.core.schemas.completion import CompletionRequest, CompletionResponse
@@ -8,9 +9,23 @@ from local_llm_platform.core.schemas.completion import CompletionRequest, Comple
 class BaseRuntime(ABC):
     """Abstract base class for all model runtime backends."""
 
-    def __init__(self, backend_name: str):
+    def __init__(self, backend_name: str, max_concurrent: int = 1):
         self.backend_name = backend_name
         self._loaded_models: Dict[str, Any] = {}
+        self._model_semaphores: Dict[str, asyncio.Semaphore] = {}
+        self._default_semaphore: Optional[asyncio.Semaphore] = None
+        self._max_concurrent = max_concurrent
+
+    def _get_semaphore(self, model_id: str) -> asyncio.Semaphore:
+        if model_id not in self._model_semaphores:
+            self._model_semaphores[model_id] = asyncio.Semaphore(self._max_concurrent)
+        return self._model_semaphores[model_id]
+
+    async def _run_in_executor(self, model_id: str, func, *args):
+        sem = self._get_semaphore(model_id)
+        async with sem:
+            loop = asyncio.get_event_loop()
+            return await loop.run_in_executor(None, func, *args)
 
     @abstractmethod
     async def load_model(self, model_id: str, model_path: str, **kwargs) -> None:

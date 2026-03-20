@@ -27,8 +27,8 @@ logger = get_logger("runtimes.llama_cpp")
 class LlamaCppRuntime(BaseRuntime):
     """Runtime backend using llama-cpp-python for GGUF models."""
 
-    def __init__(self):
-        super().__init__("llama_cpp")
+    def __init__(self, max_concurrent: int = 1):
+        super().__init__("llama_cpp", max_concurrent=max_concurrent)
         self._llama_instances: Dict[str, Any] = {}
 
     async def load_model(self, model_id: str, model_path: str, **kwargs) -> None:

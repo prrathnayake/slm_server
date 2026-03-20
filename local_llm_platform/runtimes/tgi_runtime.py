@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import Any, AsyncIterator, Dict
 
 from local_llm_platform.runtimes.base import BaseRuntime
-from local_llm_platform.core.schemas.chat import ChatCompletionRequest
-from local_llm_platform.core.schemas.completion import CompletionRequest
+from local_llm_platform.core.schemas.chat import ChatCompletionRequest, ChatCompletionResponse
+from local_llm_platform.core.schemas.completion import CompletionRequest, CompletionResponse
 from local_llm_platform.core.exceptions.errors import BackendError
 from local_llm_platform.core.logging.logger import get_logger
 
@@ -14,8 +14,8 @@ logger = get_logger("runtimes.tgi")
 class TGIRuntime(BaseRuntime):
     """Runtime backend using HuggingFace Text Generation Inference."""
 
-    def __init__(self):
-        super().__init__("tgi")
+    def __init__(self, max_concurrent: int = 4):
+        super().__init__("tgi", max_concurrent=max_concurrent)
         self._endpoints: Dict[str, str] = {}
 
     async def load_model(self, model_id: str, model_path: str, **kwargs) -> None:

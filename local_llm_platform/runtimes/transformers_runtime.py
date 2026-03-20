@@ -29,10 +29,9 @@ class TransformersRuntime(BaseRuntime):
     """Runtime using HuggingFace Transformers directly - works with safetensors, no compile needed."""
 
     def __init__(self):
-        super().__init__("transformers")
+        super().__init__("transformers", max_concurrent=1)
         self._models: Dict[str, Any] = {}
         self._tokenizers: Dict[str, Any] = {}
-        self._model_semaphores: Dict[str, asyncio.Semaphore] = {}
 
     async def load_model(self, model_id: str, model_path: str, **kwargs) -> None:
         import torch
@@ -94,19 +93,6 @@ class TransformersRuntime(BaseRuntime):
             raise BackendError("transformers", f"Model {model_id} not loaded")
         return self._models[model_id], self._tokenizers[model_id]
 
-    def _get_semaphore(self, model_id: str) -> asyncio.Semaphore:
-        if model_id not in self._model_semaphores:
-            self._model_semaphores[model_id] = asyncio.Semaphore(1)
-        return self._model_semaphores[model_id]
-
-    async def _acquire_semaphore(self, model_id: str):
-        sem = self._get_semaphore(model_id)
-        await sem.acquire()
-        return sem
-
-    async def _release_semaphore(self, sem: asyncio.Semaphore):
-        sem.release()
-
     def _format_prompt(self, messages: list, tokenizer) -> str:
         try:
             return tokenizer.apply_chat_template(
@@ -126,15 +112,34 @@ class TransformersRuntime(BaseRuntime):
             text += "Assistant:"
             return text
 
+    def _sync_generate_chat(self, model, tokenizer, messages: list, gen_kwargs: dict) -> tuple:
+        import torch
+        prompt = self._format_prompt(messages, tokenizer)
+        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+        with torch.no_grad():
+            output_ids = model.generate(**inputs, **gen_kwargs)
+        new_tokens = output_ids[0][inputs["input_ids"].shape[1]:]
+        response_text = tokenizer.decode(new_tokens, skip_special_tokens=True)
+        prompt_tokens = inputs["input_ids"].shape[1]
+        completion_tokens = len(new_tokens)
+        return response_text, prompt_tokens, completion_tokens
+
+    def _sync_generate_completion(self, model, tokenizer, prompt: str, gen_kwargs: dict) -> tuple:
+        import torch
+        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+        with torch.no_grad():
+            output_ids = model.generate(**inputs, **gen_kwargs)
+        new_tokens = output_ids[0][inputs["input_ids"].shape[1]:]
+        text = tokenizer.decode(new_tokens, skip_special_tokens=True)
+        prompt_tokens = inputs["input_ids"].shape[1]
+        completion_tokens = len(new_tokens)
+        return text, prompt_tokens, completion_tokens
+
     async def chat_completion(
         self, model_id: str, request: ChatCompletionRequest
     ) -> ChatCompletionResponse:
-        import torch
-
         model, tokenizer = self._get_model(model_id)
         messages = [m.model_dump(exclude_none=True) for m in request.messages]
-        prompt = self._format_prompt(messages, tokenizer)
-        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
         gen_kwargs = {
             "max_new_tokens": request.max_tokens or 512,
@@ -148,15 +153,9 @@ class TransformersRuntime(BaseRuntime):
             stop = request.stop if isinstance(request.stop, list) else [request.stop]
             gen_kwargs["stop_strings"] = stop
 
-        async with self._get_semaphore(model_id):
-            with torch.no_grad():
-                output_ids = model.generate(**inputs, **gen_kwargs)
-
-        new_tokens = output_ids[0][inputs["input_ids"].shape[1]:]
-        response_text = tokenizer.decode(new_tokens, skip_special_tokens=True)
-
-        prompt_tokens = inputs["input_ids"].shape[1]
-        completion_tokens = len(new_tokens)
+        response_text, prompt_tokens, completion_tokens = await self._run_in_executor(
+            model_id, self._sync_generate_chat, model, tokenizer, messages, gen_kwargs
+        )
 
         return ChatCompletionResponse(
             id=f"chatcmpl-{uuid.uuid4().hex[:12]}",
@@ -201,7 +200,7 @@ class TransformersRuntime(BaseRuntime):
 
         completion_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
         created = int(time.time())
-        exception_queue = queue.Queue()
+        exception_queue: queue.Queue = queue.Queue()
 
         def generate_in_thread():
             try:
@@ -210,56 +209,50 @@ class TransformersRuntime(BaseRuntime):
             except Exception as e:
                 exception_queue.put(e)
 
-        semaphore = self._get_semaphore(model_id)
-        await semaphore.acquire()
+        sem = self._get_semaphore(model_id)
+        await sem.acquire()
         try:
             thread = threading.Thread(target=generate_in_thread)
             thread.start()
 
-            try:
-                for text in streamer:
-                    if text:
-                        data = {
-                            "id": completion_id,
-                            "object": "chat.completion.chunk",
-                            "created": created,
-                            "model": model_id,
-                            "choices": [
-                                {
-                                    "index": 0,
-                                    "delta": {"content": text},
-                                    "finish_reason": None,
-                                }
-                            ],
-                        }
-                        yield f"data: {json.dumps(data)}\n\n"
+            for text in streamer:
+                if text:
+                    data = {
+                        "id": completion_id,
+                        "object": "chat.completion.chunk",
+                        "created": created,
+                        "model": model_id,
+                        "choices": [
+                            {
+                                "index": 0,
+                                "delta": {"content": text},
+                                "finish_reason": None,
+                            }
+                        ],
+                    }
+                    yield f"data: {json.dumps(data)}\n\n"
 
-                thread.join(timeout=5)
+            thread.join(timeout=5)
 
-                if not exception_queue.empty():
-                    raise exception_queue.get()
+            if not exception_queue.empty():
+                raise exception_queue.get()
 
-                data = {
-                    "id": completion_id,
-                    "object": "chat.completion.chunk",
-                    "created": created,
-                    "model": model_id,
-                    "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
-                }
-                yield f"data: {json.dumps(data)}\n\n"
-                yield "data: [DONE]\n\n"
-            finally:
-                thread.join(timeout=1)
+            data = {
+                "id": completion_id,
+                "object": "chat.completion.chunk",
+                "created": created,
+                "model": model_id,
+                "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+            }
+            yield f"data: {json.dumps(data)}\n\n"
+            yield "data: [DONE]\n\n"
         finally:
-            semaphore.release()
+            sem.release()
 
     async def completion(
         self, model_id: str, request: CompletionRequest
     ) -> CompletionResponse:
-        import torch
-
         model, tokenizer = self._get_model(model_id)
-        inputs = tokenizer(request.prompt, return_tensors="pt").to(model.device)
 
         gen_kwargs = {
             "max_new_tokens": request.max_tokens or 16,
@@ -269,12 +262,9 @@ class TransformersRuntime(BaseRuntime):
             "pad_token_id": tokenizer.pad_token_id,
         }
 
-        async with self._get_semaphore(model_id):
-            with torch.no_grad():
-                output_ids = model.generate(**inputs, **gen_kwargs)
-
-        new_tokens = output_ids[0][inputs["input_ids"].shape[1]:]
-        text = tokenizer.decode(new_tokens, skip_special_tokens=True)
+        text, prompt_tokens, completion_tokens = await self._run_in_executor(
+            model_id, self._sync_generate_completion, model, tokenizer, request.prompt, gen_kwargs
+        )
 
         return CompletionResponse(
             id=f"cmpl-{uuid.uuid4().hex[:12]}",
@@ -288,9 +278,9 @@ class TransformersRuntime(BaseRuntime):
                 )
             ],
             usage=UsageInfo(
-                prompt_tokens=inputs["input_ids"].shape[1],
-                completion_tokens=len(new_tokens),
-                total_tokens=inputs["input_ids"].shape[1] + len(new_tokens),
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                total_tokens=prompt_tokens + completion_tokens,
             ),
         )
 

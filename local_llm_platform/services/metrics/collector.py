@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import time
 from collections import defaultdict, deque
 from typing import Any, Dict, Optional
@@ -32,6 +33,13 @@ class MetricsCollector:
     def gauge(self, name: str, value: float) -> None:
         self._gauges[name] = value
 
+    def _percentile(self, sorted_vals: list[float], p: float) -> float:
+        if not sorted_vals:
+            return 0.0
+        n = len(sorted_vals)
+        idx = max(0, min(n - 1, int(math.ceil(n * p)) - 1))
+        return sorted_vals[idx]
+
     def get_summary(self) -> Dict[str, Any]:
         uptime = time.time() - self._start_time
 
@@ -40,16 +48,15 @@ class MetricsCollector:
             if hist:
                 n = len(hist)
                 total = sum(hist)
-                
                 sorted_vals = sorted(hist)
                 histogram_stats[name] = {
                     "count": n,
                     "min": sorted_vals[0],
                     "max": sorted_vals[-1],
                     "avg": total / n,
-                    "p50": sorted_vals[n // 2],
-                    "p95": sorted_vals[min(n - 1, int(n * 0.95))],
-                    "p99": sorted_vals[min(n - 1, int(n * 0.99))],
+                    "p50": self._percentile(sorted_vals, 0.50),
+                    "p95": self._percentile(sorted_vals, 0.95),
+                    "p99": self._percentile(sorted_vals, 0.99),
                 }
 
         return {

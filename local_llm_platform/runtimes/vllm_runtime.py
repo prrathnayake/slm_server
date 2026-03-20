@@ -27,8 +27,8 @@ logger = get_logger("runtimes.vllm")
 class VLLMRuntime(BaseRuntime):
     """Runtime backend using vLLM for high-throughput transformer serving."""
 
-    def __init__(self, tensor_parallel_size: int = 1):
-        super().__init__("vllm")
+    def __init__(self, tensor_parallel_size: int = 1, max_concurrent: int = 4):
+        super().__init__("vllm", max_concurrent=max_concurrent)
         self._engines: Dict[str, Any] = {}
         self.tensor_parallel_size = tensor_parallel_size
 
