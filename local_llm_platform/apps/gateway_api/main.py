@@ -1,7 +1,7 @@
 import json
 import time
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
@@ -28,15 +28,62 @@ from local_llm_platform.services.huggingface.hf_service import HuggingFaceServic
 setup_logging(settings.DEBUG and "DEBUG" or "INFO")
 logger = get_logger("gateway")
 
-registry = ModelRegistry()
-router = RuntimeRouter(registry)
-training_service = TrainingService()
-dataset_service = DatasetService()
-metrics = MetricsCollector()
-artifact_manager = ArtifactManager()
-import_processor = ImportProcessor()
-adapter_manager = AdapterManager()
-hf_service = HuggingFaceService()
+_services: Dict[str, Any] = {}
+
+def get_registry() -> ModelRegistry:
+    if "registry" not in _services:
+        _services["registry"] = ModelRegistry()
+    return _services["registry"]
+
+def get_router() -> RuntimeRouter:
+    if "router" not in _services:
+        _services["router"] = RuntimeRouter(get_registry())
+    return _services["router"]
+
+def get_training_service() -> TrainingService:
+    if "training" not in _services:
+        _services["training"] = TrainingService()
+    return _services["training"]
+
+def get_dataset_service() -> DatasetService:
+    if "datasets" not in _services:
+        _services["datasets"] = DatasetService()
+    return _services["datasets"]
+
+def get_metrics() -> MetricsCollector:
+    if "metrics" not in _services:
+        _services["metrics"] = MetricsCollector()
+    return _services["metrics"]
+
+def get_artifact_manager() -> ArtifactManager:
+    if "artifacts" not in _services:
+        _services["artifacts"] = ArtifactManager()
+    return _services["artifacts"]
+
+def get_import_processor() -> ImportProcessor:
+    if "import" not in _services:
+        _services["import"] = ImportProcessor()
+    return _services["import"]
+
+def get_adapter_manager() -> AdapterManager:
+    if "adapter" not in _services:
+        _services["adapter"] = AdapterManager()
+    return _services["adapter"]
+
+def get_hf_service() -> HuggingFaceService:
+    if "hf" not in _services:
+        _services["hf"] = HuggingFaceService()
+    return _services["hf"]
+
+registry = get_registry()
+router = get_router()
+training_service = get_training_service()
+dataset_service = get_dataset_service()
+metrics = get_metrics()
+artifact_manager = get_artifact_manager()
+import_processor = get_import_processor()
+adapter_manager = get_adapter_manager()
+hf_service = get_hf_service()
 
 
 @asynccontextmanager

@@ -43,7 +43,7 @@ class DatasetService:
         import shutil
         shutil.copy2(source, target)
 
-        num_samples = await self._count_samples(target, dataset_format)
+        num_samples = self._count_samples_sync(target, dataset_format)
 
         entry = DatasetEntry(
             dataset_id=dataset_id,
@@ -115,7 +115,7 @@ class DatasetService:
         logger.info(f"Deleted dataset {dataset_id}")
         return True
 
-    async def _count_samples(self, path: Path, dataset_format: DatasetFormat) -> int:
+    def _count_samples_sync(self, path: Path, dataset_format: DatasetFormat) -> int:
         try:
             if dataset_format == DatasetFormat.JSONL:
                 count = 0

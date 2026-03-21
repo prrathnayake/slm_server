@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from concurrent.futures import ThreadPoolExecutor
@@ -111,16 +112,15 @@ class HuggingFaceService:
             info = model_info(model_id)
             files = api.list_repo_files(model_id)
 
-            # Get file sizes
-            file_list = []
+            siblings_by_file = {s.rfilename: s for s in (info.siblings or [])}
             total_size = 0
+            file_list = []
             for f in files:
+                sibling = siblings_by_file.get(f)
                 size = None
-                for sibling in (info.siblings or []):
-                    if sibling.rfilename == f:
-                        size = sibling.size
-                        total_size += size or 0
-                        break
+                if sibling and sibling.size:
+                    size = sibling.size
+                    total_size += size
                 file_list.append({"name": f, "size": size})
 
             return {

@@ -7,8 +7,9 @@ from typing import Any, Dict
 
 class JSONFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
+        timestamp = datetime.now(timezone.utc)
         log_entry: Dict[str, Any] = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": timestamp.isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),

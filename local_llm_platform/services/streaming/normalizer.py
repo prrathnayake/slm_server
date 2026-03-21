@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any, AsyncIterator
 
 from local_llm_platform.core.logging.logger import get_logger
@@ -30,23 +31,25 @@ class StreamNormalizer:
         stream: AsyncIterator[str],
     ) -> AsyncIterator[tuple[str, dict]]:
         token_count = 0
-        import time
         start_time = time.time()
 
         async for chunk in stream:
             token_count += 1
             elapsed = time.time() - start_time
+            tokens_per_second = token_count / elapsed if elapsed > 0 else 0.0
             metrics = {
                 "tokens_generated": token_count,
                 "elapsed_seconds": elapsed,
-                "tokens_per_second": token_count / max(elapsed, 0.001),
+                "tokens_per_second": tokens_per_second,
             }
             yield chunk, metrics
 
+        elapsed = time.time() - start_time
+        tokens_per_second = token_count / elapsed if elapsed > 0 else 0.0
         final_metrics = {
             "tokens_generated": token_count,
-            "elapsed_seconds": time.time() - start_time,
-            "tokens_per_second": token_count / max(time.time() - start_time, 0.001),
+            "elapsed_seconds": elapsed,
+            "tokens_per_second": tokens_per_second,
             "complete": True,
         }
         yield "", final_metrics
