@@ -61,10 +61,6 @@ Stop sending your data to third-party APIs. SLM Platform is a local-first soluti
 ### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/YOUR_USERNAME/slm-platform.git
-cd slm-platform
-
 # Or clone this repository directly
 git clone https://github.com/prrathnayake/slm-platform.git
 cd slm-platform
